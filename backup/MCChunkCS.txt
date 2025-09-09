@@ -1,0 +1,206 @@
+using Godot;
+using System;
+
+// MCChunk - Marching Cubes Chunk
+// Drží informace o chunku a také jeho mesh.
+public partial class MCChunk : Node3D
+{
+    // Data
+    public static readonly Vector3I FieldSize = new Vector3I(8 - 1, 8 - 1, 8 - 1);
+    public byte[] Field;
+    // Mesh
+    public MeshInstance3D Mesh;
+    // kolize
+    StaticBody3D StaticBody; // Taky odebrat !!
+    CollisionShape3D[] CollisionField; // Odebrat!! Bottleneck
+    // Reference
+
+    public const byte Isolevel = 128;
+
+    public MCChunk()
+    {
+        // iniciace pole
+        // od originální velikosti ideberem 1 aby šly chunky k sobě
+        //FieldSize = new Vector3I(16 - 1, 16 - 1, 16 - 1);
+        Field = new byte[FieldSize.X * FieldSize.Y * FieldSize.Z];
+        CollisionField = new CollisionShape3D[FieldSize.X * FieldSize.Y * FieldSize.Z];
+        //Isolevel = 128; // polovina byte (256)
+        //CsgBox3D
+
+        Mesh = new MeshInstance3D();
+
+    }
+
+    public override void _Ready()
+    {
+        // vytvoříme mesh z pole, pomocí marching cubes algorithmu. 
+
+        //Mesh.SetSurfaceOverrideMaterial(0, MeshMaterial);
+        Godot.ArrayMesh ArrMesh = MarchingCubes.CreateMesh(ref Field, FieldSize, Isolevel);
+        Mesh.Mesh = ArrMesh;
+        AddChild(Mesh);
+
+        StaticBody = new StaticBody3D();
+        Mesh.AddChild(StaticBody);
+
+        InitCollision();
+        CreateCollision();
+    }
+
+    /*
+    public void ModifyField(Vector3 Point, byte Amount, bool Subtract)
+    {
+        // tady nemusí být for loop stačí updatenout na pozici?
+        for (uint z = 0; z < FieldSize.Z; z++)
+        {
+            for (uint y = 0; y < FieldSize.Y; y++)
+            {
+                for (uint x = 0; x < FieldSize.X; x++)
+                {
+                    uint CellIndex = x + y * (uint)FieldSize.X + z * (uint)FieldSize.X * (uint)FieldSize.Y;
+                    Vector3 CellPosition = new Vector3((float)x, (float)y, (float)z);
+                    Vector3 Distance = CellPosition - Point;
+                    if (Distance.Length() < 2.0f)
+                    {
+                        if (Field[CellIndex] <= 255 - Amount && Subtract)
+                        {
+                            Field[CellIndex] += Amount;
+                        }
+                        else if (Field[CellIndex] >= Amount && !Subtract)
+                        {
+                            Field[CellIndex] -= Amount;
+                        }
+                    }
+                }
+            }
+        }
+        // znovu vygenerujem mesh
+        //Godot.ArrayMesh ArrMesh = MarchingCubes.CreateMesh(ref Field, FieldSize, Isolevel);
+        //Mesh.Mesh = ArrMesh;
+        // updatenem collision shape
+        //CreateCollision();
+    }
+
+    public void ModifyFieldZ(Vector3 Point, byte Amount, bool Subtract, ref MCChunk ChunkZ)
+    {
+        // tady nemusí být for loop stačí updatenout na pozici?
+        for (uint z = 0; z < FieldSize.Z; z++)
+        {
+            for (uint y = 0; y < FieldSize.Y; y++)
+            {
+                for (uint x = 0; x < FieldSize.X; x++)
+                {
+                    uint CellIndex = x + y * (uint)FieldSize.X + z * (uint)FieldSize.X * (uint)FieldSize.Y;
+                    Vector3 CellPosition = new Vector3((float)x, (float)y, (float)z);
+                    Vector3 Distance = CellPosition - Point;
+                    if (Distance.Length() < 2.0f)
+                    {
+                        if (Field[CellIndex] <= 255 - Amount && Subtract)
+                        {
+                            Field[CellIndex] += Amount;
+                        }
+                        else if (Field[CellIndex] >= Amount && !Subtract)
+                        {
+                            Field[CellIndex] -= Amount;
+                        }
+                    }
+                }
+            }
+        }
+        // znovu vygenerujem meshe
+        //Godot.ArrayMesh ArrMesh = MarchingCubes.CreateMeshChunkEdge(ref Field, FieldSize, Isolevel, ref ChunkZ.Field);
+        //Mesh.Mesh = ArrMesh;
+        // updatenem collision shape
+        CreateCollision();
+    }
+    */
+
+    public StaticBody3D GetCollider()
+    {
+        return StaticBody;
+    }
+
+    public Vector3 GlobalToLocalCoord(Vector3 Coord3D)
+    {
+        return Coord3D - Transform.Origin;
+    }
+
+    public void InitCollision()
+    {
+        // pro každý bod se vytvoří circle collision shape.
+        //CollisionShape
+        SphereShape3D shape3D = new SphereShape3D();
+
+        for (uint z = 0; z < FieldSize.Z; z++)
+        {
+            for (uint y = 0; y < FieldSize.Y; y++)
+            {
+                for (uint x = 0; x < FieldSize.X; x++)
+                {
+                    ref CollisionShape3D Collider = ref CollisionField[x + y * FieldSize.X + z * FieldSize.X * FieldSize.Y];
+                    Collider = new CollisionShape3D();
+                    // vytvoříme čtvercový tvar 
+                    BoxShape3D ColliderShape = new BoxShape3D();
+                    ColliderShape.Size = new Vector3(1.0f, 1.0f, 1.0f);
+                    Collider.Shape = ColliderShape;
+                    // pro začátek všehcny collison tvary budou vypnuté.
+                    // také nastavíme pozici
+                    Collider.Disabled = true;
+                    Collider.Translate(new(x, y, z));
+                    //
+                    StaticBody.AddChild(Collider);
+
+                }
+            }
+        }
+    }
+
+    public void CreateCollision()
+    {
+        // pro každý bod se vytvoří circle collision shape.
+        //CollisionShape
+        for (uint z = 0; z < FieldSize.Z; z++)
+        {
+            for (uint y = 0; y < FieldSize.Y; y++)
+            {
+                for (uint x = 0; x < FieldSize.X; x++)
+                {
+                    ref CollisionShape3D Collider = ref CollisionField[x + y * FieldSize.X + z * FieldSize.X * FieldSize.Y];
+                    if (Field[x + y * (uint)FieldSize.X + z * (uint)FieldSize.X * (uint)FieldSize.Y] < Isolevel)
+                    {
+                        Collider.Disabled = false;
+                    }
+                    else
+                    {
+                        Collider.Disabled = true;
+                    }
+                }
+            }
+        }
+    }
+
+    public void CreateCollisionLOD(byte LOD)
+    {
+        // pro každý bod se vytvoří circle collision shape.
+        //CollisionShape
+        for (uint z = 0; z < FieldSize.Z; z++)
+        {
+            for (uint y = 0; y < FieldSize.Y; y++)
+            {
+                for (uint x = 0; x < FieldSize.X; x++)
+                {
+                    ref CollisionShape3D Collider = ref CollisionField[x + y * FieldSize.X + z * FieldSize.X * FieldSize.Y];
+                    if (Field[x + y * (uint)FieldSize.X + z * (uint)FieldSize.X * (uint)FieldSize.Y] < Isolevel)
+                    {
+                        Collider.Disabled = false;
+                    }
+                    else
+                    {
+                        Collider.Disabled = true;
+                    }
+                }
+            }
+        }
+    }
+
+}

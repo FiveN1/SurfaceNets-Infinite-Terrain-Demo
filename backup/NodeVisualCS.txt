@@ -1,0 +1,396 @@
+using Godot;
+using System;
+
+// čistší implementace octree systému
+
+// ZMENŠIT CHUNK NA  3X3 NEBO 2X2
+
+namespace Octree
+{
+    public partial class Node
+    {
+
+        public static bool debugVisualsEnabled = false;
+        static Node3D meshNode;
+        static StandardMaterial3D debugMeshMaterial;
+        MeshInstance3D debugBox;
+
+        static ChunkQueue chunkQueue;
+
+        int chunkIndex = -1;
+
+        public void CreateMesh()
+        {
+
+            /*
+            * Pipeline
+            *
+            * octNode {node v octree}
+            * fieldData {3D byte data}
+            * meshData {vertices, normals, indices}
+            * -> vertices [core vertices...end] [end...edge vertices]
+            *
+            * GetEdgeField(octNode)
+            *
+            * GenerateMeshCore(fieldData, meshData)
+            *
+            * GetEdgeVertices(octNode, meshData)
+            *
+            * CreateEdgeIndices(fieldData, meshData)
+            *
+            *
+            */
+
+
+            //if (!debugVisualsEnabled) return;
+            //if (this.debugBox != null) return;
+
+            if (chunkIndex != -1) return;
+
+
+            /*
+            BoxMesh boxMesh = new BoxMesh();
+            boxMesh.Size = new Vector3(this.size, this.size, this.size);
+            this.debugBox = new MeshInstance3D();
+            this.debugBox.Mesh = boxMesh;
+            this.debugBox.Position = this.position + new Vector3(this.size, this.size, this.size) * 0.5f;
+            //StandardMaterial3D MeshMaterial = NodeMaterial.Duplicate() as StandardMaterial3D;
+            //MeshMaterial.AlbedoColor = new Color((GD.Randi() % 100) * 0.01f, (GD.Randi() % 100) * 0.01f, (GD.Randi() % 100) * 0.01f, 0.2f);
+            this.debugBox.SetSurfaceOverrideMaterial(0, debugMeshMaterial);
+            meshNode.AddChild(this.debugBox);
+            */
+
+            //
+            // Get chunk
+            //
+            chunkIndex = chunkQueue.GetAvalibeChunk();
+            //GD.Print("found avalible chunk at: ", chunkIndex);
+            //
+            Terrain22.Chunk chunk = chunkQueue.GetChunk(chunkIndex);
+            chunk.LoadField(Octree.Tree.worldGen, this.size, this.position);
+
+
+            //
+            // get neighbor data
+            //
+            // Pro každý direction (0, 0, 0) - (1, 1, 1), 0 - 7
+            //
+            //
+
+            if (this.position == new Vector3(0, 0, 0))
+            {
+                GD.Print("GENERATING CHUNK EDGE");
+                for (int i = 1; i < 8; i++)
+                {
+                    //Vector3I NeighborDirection = new(i % 2, i / 2 % 2, i / 4);
+                    //GD.Print("Neighbor Direction: ", NeighborDirection);
+
+                    //GetEdgeFieldValues(NeighborDirection, ref chunk.field, Terrain22.Chunk.fieldSize);
+                }
+
+                //Vector3[] nextVertexPositions = new Vector3[Terrain22.Chunk.fieldSize * Terrain22.Chunk.fieldSize];
+                int edgeVertindex = Terrain22.Chunk.size * Terrain22.Chunk.size * Terrain22.Chunk.size;
+                GetEdgeFieldValues(new(1, 0, 0), ref chunk.field, Terrain22.Chunk.fieldSize, edgeVertindex);
+                GetEdgeVertices(new(1, 0, 0), ref chunk.field, Terrain22.Chunk.fieldSize, edgeVertindex);
+            }
+            //GetEdgeFieldValues(new(1, 0, 0), ref chunk.field, Terrain22.Chunk.fieldSize);
+
+            /*
+            Vector3I direction = new(1, 0, 0);
+            Octree.Node NeighborX = this.GetNeighbor(direction);
+            if (NeighborX != null)
+            {
+                if (NeighborX.chunkIndex != -1 && NeighborX.size == this.size)
+                {
+                    // combine field X
+                    Terrain22.Chunk nChunk = chunkQueue.GetChunk(NeighborX.chunkIndex);
+                    // set field x
+
+                    for (int z = direction.Z * Terrain22.Chunk.size; z < Terrain22.Chunk.fieldSize; z++)
+                    {
+                        for (int y = direction.Y * Terrain22.Chunk.size; y < Terrain22.Chunk.fieldSize; y++)
+                        {
+                            for (int x = direction.X * Terrain22.Chunk.size; x < Terrain22.Chunk.fieldSize; x++)
+                            {
+                                //...
+                                int fieldIndex = x + y * Terrain22.Chunk.fieldSize + z * Terrain22.Chunk.fieldSize * Terrain22.Chunk.fieldSize;
+                                chunk.field[fieldIndex] = 255;
+                            }
+                        }
+                    }
+
+                }
+            }
+            */
+
+
+            //if (this.size == 8.0f)
+            //{
+            //chunk.SaveInFile(this.position);
+            //}
+
+            chunk.GenerateMesh(this.size, this.position);
+            // load at position
+            // make mesh
+
+
+            // spojit vertexy.
+            // HRANIČNÍ VERTEXY MUSÍ BÝT V JINÉM POLI!
+            // MŮŽE JICH BÝT ZĚTŠÍ POČET !
+
+            /*
+            if (NeighborX != null)
+            {
+                if (NeighborX.chunkIndex != -1 && NeighborX.size == this.size)
+                {
+                    // získat vertexy...
+                    //chunk.meshData.vertexPositions[]
+
+                    // caseindex
+                    // atd...
+
+                    for (int z = direction.Z * Terrain22.Chunk.size; z < Terrain22.Chunk.fieldSize; z++)
+                    {
+                        for (int y = direction.Y * Terrain22.Chunk.size; y < Terrain22.Chunk.fieldSize; y++)
+                        {
+                            for (int x = direction.X * Terrain22.Chunk.size; x < Terrain22.Chunk.fieldSize; x++)
+                            {
+                                //...
+                                int fieldIndex = x + y * Terrain22.Chunk.fieldSize + z * Terrain22.Chunk.fieldSize * Terrain22.Chunk.fieldSize;
+                                //chunk.field[fieldIndex] = 255;
+                                chunk.meshData.vertexPositions[fieldIndex] = new Vector3(0.0f, 100.0f, 0.0f);
+                                // přidat indexy
+                                SurfaceNet.Algorithm.GetCaseCode(ref chunk.field, new(Terrain22.Chunk.fieldSize, Terrain22.Chunk.fieldSize, Terrain22.Chunk.fieldSize), 128, fieldIndex);
+
+                            }
+                        }
+                    }
+
+                }
+            }
+            */
+
+        }
+
+
+        public void RemoveMesh()
+        {
+            if (chunkIndex == -1) return;
+            /*
+            if (!debugVisualsEnabled) return;
+            if (this.debugBox == null) return;
+
+            meshNode.RemoveChild(this.debugBox);
+            this.debugBox.QueueFree();
+            this.debugBox = null;
+            */
+
+            chunkQueue.MakeChunkavalible(chunkIndex);
+            chunkIndex = -1;
+
+        }
+
+        public static void EnableDebugVisuals(bool enabled)
+        {
+            debugVisualsEnabled = enabled;
+        }
+
+        public static void SetMeshParentNode(Node3D meshParentNode)
+        {
+            meshNode = meshParentNode;
+        }
+
+        public static void SetDebugMeshMaterial(StandardMaterial3D material)
+        {
+            debugMeshMaterial = material;
+        }
+
+        public static void SetChunkQueue(ChunkQueue chunkQueueInstance)
+        {
+            chunkQueue = chunkQueueInstance;
+        }
+
+
+
+        void GetEdgeFieldValues(Vector3I NeighborDirection, ref byte[] field, int fieldSize, int edgeVErticesStartindex)
+        {
+            Octree.Node neighborNode = this.GetNeighbor(NeighborDirection);
+            if (neighborNode == null)
+            {
+                return;
+            }
+            if (neighborNode.chunkIndex == -1 || neighborNode.size != this.size)
+            {
+                return;
+            }
+            //GD.Print("found Neighbor for ", this, "in: ", NeighborDirection);
+            Terrain22.Chunk neighborChunk = chunkQueue.GetChunk(neighborNode.chunkIndex);
+            Terrain22.Chunk thisChunk = chunkQueue.GetChunk(this.chunkIndex);
+
+            /*
+            for (int z = NeighborDirection.Z * (fieldSize - 1); z < fieldSize; z++)
+            {
+                for (int y = NeighborDirection.Y * (fieldSize - 1); y < fieldSize; y++)
+                {
+                    for (int x = NeighborDirection.X * (fieldSize - 1); x < fieldSize; x++)
+                    {
+                        int fieldIndex = x + y * fieldSize + z * fieldSize * fieldSize;
+                        int neighborFieldIndex = 0; // dodělat
+
+                        field[fieldIndex] = neighborChunk.field[neighborFieldIndex];
+                        //field[fieldIndex] = 255;
+                    }
+                }
+            }
+            */
+
+            //nextVertexPositions = new Vector3[fieldSize * fieldSize];
+
+            for (int z = 0; z < fieldSize; z++)
+            {
+                for (int y = 0; y < fieldSize; y++)
+                {
+                    int thisIndex = (fieldSize - 1) + y * fieldSize + z * fieldSize * fieldSize;
+                    int nextIndex = y * fieldSize + z * fieldSize * fieldSize;
+                    field[thisIndex] = neighborChunk.field[nextIndex];
+
+                    // set vertices
+                    //nextVertexPositions[nextIndex] = neighborChunk.meshData.vertexPositions[nextIndex];
+                    GD.Print("vertex: ", neighborChunk.meshData.vertexPositions[nextIndex]);
+                    GD.Print("next index: ", (fieldSize - 1) * (fieldSize - 1) * (fieldSize - 1) + nextIndex);
+                    thisChunk.meshData.vertexPositions[(fieldSize - 1) * (fieldSize - 1) * (fieldSize - 1) + nextIndex] = neighborChunk.meshData.vertexPositions[nextIndex];
+                }
+            }
+
+        }
+
+
+        // https://pastebin.com/kJXZvTJf
+        void GetEdgeVertices(Vector3I NeighborDirection, ref byte[] field, int fieldSize, int edgeVErticesStartindex)
+        {
+            if (NeighborDirection != new Vector3(1, 0, 0)) // zatím pouze pro x stranu.
+            {
+                return;
+            }
+
+            Octree.Node neighborNode = this.GetNeighbor(NeighborDirection);
+            if (neighborNode == null)
+            {
+                return;
+            }
+            if (neighborNode.chunkIndex == -1 || neighborNode.size != this.size)
+            {
+                return;
+            }
+            //GD.Print("found Neighbor for ", this, "in: ", NeighborDirection);
+            Terrain22.Chunk thisChunk = chunkQueue.GetChunk(this.chunkIndex);
+            Terrain22.Chunk neighborChunk = chunkQueue.GetChunk(neighborNode.chunkIndex);
+
+
+            // Získat vertexy z celé strany
+            // přidat do pole
+            // spojit.
+
+            // y,z plane
+            // projedem všechny buňky hran chunku
+            // získáme casecode
+            // získáme vertexy z vedlejšího chunku
+            // spojíme a zkopírujeme
+            int writeIndex = (fieldSize - 1) * (fieldSize - 1) * (fieldSize - 1);
+
+            for (int z = 0; z < fieldSize - 1; z++)
+            {
+                for (int y = 0; y < fieldSize - 1; y++)
+                {
+                    int thisX = fieldSize - 2;
+                    int nextX = 0;
+                    int thisFieldIndex = thisX + y * fieldSize + z * fieldSize * fieldSize;
+                    int nextFieldIndex = nextX + y * fieldSize + z * fieldSize * fieldSize;
+
+                    int vertexIndex = thisX + y * (fieldSize - 1) + z * (fieldSize - 1) * (fieldSize - 1);
+
+
+                    // získat vertex a index vertexu z našeho pole
+
+                    // získat vertex z vedlejšího pole
+                    // zaokrouhlit nebo přidat funkci getvertex()
+                    //Vector3 nextVertex = neighborChunk.meshData.vertexPositions[nextFieldIndex];
+
+                    // získat cell index (vedlejší field je už v tomhle fieldu)
+                    byte caseCode = SurfaceNet.Algorithm.GetCaseCode(ref thisChunk.field, new(fieldSize, fieldSize, fieldSize), 128, thisFieldIndex);
+
+                    GD.Print("casecode: ", caseCode, " xyz: ", new Vector3(thisX, y, z));
+
+                    GD.Print("indices: ");
+                    for (int i = 0; i < 18; i++)
+                    {
+                        int index = SurfaceNet.Tables.indexTable3D[caseCode, i];
+                        if (index == -1) break;
+                        Vector3I indexV = new(index % 2, index / 4, index / 2 % 2);
+
+                        if (indexV.X == 1)
+                        {
+                            // set next vertex...
+                            GD.Print("next index: ", (fieldSize - 1) * (fieldSize - 1) * (fieldSize - 1) + nextFieldIndex + indexV.Y * (fieldSize - 1) + indexV.Z * (fieldSize - 1) * (fieldSize - 1));
+                            thisChunk.meshData.indices[writeIndex] = (fieldSize - 1) * (fieldSize - 1) * (fieldSize - 1) + nextFieldIndex + indexV.Y * (fieldSize - 1) + indexV.Z * (fieldSize - 1) * (fieldSize - 1);
+                        }
+                        else
+                        {
+                            //thisChunk.meshData.indices[writeIndex]
+                            thisChunk.meshData.indices[writeIndex] = vertexIndex + indexV.X + indexV.Y * (fieldSize - 1) + indexV.Z * (fieldSize - 1) * (fieldSize - 1);
+                        }
+                        //GD.Print(indexV);
+                        //indices[writeIndex] = vertexIndex + indexV.X + indexV.Y * (fieldSize.X - 1) + indexV.Z * (fieldSize.X - 1) * (fieldSize.Y - 1);
+                        writeIndex++;
+                    }
+
+                }
+            }
+
+
+            /*
+            Vector3 inverseDir = new(0, 0, 0);
+            if (NeighborDirection.X == 0)
+            {
+                inverseDir.X = 1;
+            }
+            if (NeighborDirection.Y == 0)
+            {
+                inverseDir.Y = 1;
+            }
+            if (NeighborDirection.Z == 0)
+            {
+                inverseDir.Z = 1;
+            }
+
+
+
+            GD.Print("neighbor vertices:");
+            for (int z = 0; z < (fieldSize - 1) * inverseDir.Z + 1; z++)
+            {
+                for (int y = 0; y < (fieldSize - 1) * inverseDir.Y + 1; y++)
+                {
+                    for (int x = 0; x < (fieldSize - 1) * inverseDir.X + 1; x++)
+                    {
+                        int fieldIndex = x + y * fieldSize + z * fieldSize * fieldSize;
+                        //int neighborFieldIndex = 0; // dodělat
+                        //field[fieldIndex] = neighborChunk.field[neighborFieldIndex];
+
+                        GD.Print("xyz:", x, ", ", y, ", ", z, " vertex: ", neighborChunk.meshData.vertexPositions[fieldIndex]);
+                        // přidat na konec vertices
+                        // vytvořit indexy.
+                        
+                    }
+                }
+            }
+            */
+
+
+
+            // edge vertexy budou v jinem poli?
+            // nebo proste budem držet odkaz na pole vedle...
+            // -> potom prostě přidáme vertexy do našeho pole? jak?
+            //
+        }
+    }
+}

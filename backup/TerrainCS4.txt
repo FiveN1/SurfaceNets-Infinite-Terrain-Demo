@@ -1,0 +1,430 @@
+using Godot;
+using System;
+using System.IO.IsolatedStorage;
+
+/*
+*
+*
+*
+*
+*
+*
+*/
+
+// funkce PlayerMovedToChunk
+// kde se updatne LOD chunků
+//  LOD Meshe.
+//  LOD Collision.
+//      Chunky které jsou za nějakou hranicí už nebudou mít kolizi.
+// Chunky za hranicí budou odebrány a místo nich budou vygenerovány nové.
+
+public partial class MCTerrain : Node3D
+{
+
+    [Export] NoiseTexture2D noiseTexture;
+
+    //public MCChunk[] Chunks;
+    //public static Vector3I ChunkSize = new Vector3I(4, 4, 4);
+    //public byte NullFieldValue = 255;
+
+    //MCChunkCollision[] ChunkCollisions; // vlstní array?
+
+
+    MCChunkField ChunkField;
+    MCChunkCollisionField CollisionField;
+
+    Vector3I PlayerChunkPosition;
+
+
+    //MCChunkCollision ChunkCollision1;
+
+
+
+    // collision nodes
+    // 2x2x2 chunk High quality
+    // 6x6x6 - 2x2x2 Low Quality chunk
+    // collision chunk - Quality setting
+
+    //
+    //
+    //
+
+    public override void _Ready()
+    {
+        Material MeshMaterial = ResourceLoader.Load<Material>("res://materials/material1.tres");
+
+        /*
+        Chunks = new MCChunk[ChunkSize.X * ChunkSize.Y * ChunkSize.Z];
+        //ChunkCollisions = new MCChunkCollision[8];
+        //
+        // nastavení pozic
+        // nastavení dat.
+
+        Translate(new(0.0f, -24.0f, 0.0f));
+
+        Image PerlinImage = noiseTexture.Noise.GetImage(ChunkSize.X * MCChunk.FieldSize.X, ChunkSize.Z * MCChunk.FieldSize.Z);
+        //GD.Print("image: ", PerlinImage.GetWidth(), ", ", PerlinImage.GetHeight(), ",", ChunkSize.X * MCChunk.FieldSize.X, ", ", ChunkSize.Y * MCChunk.FieldSize.Y);
+        for (int z = 0; z < ChunkSize.Z; z++)
+        {
+            for (int y = 0; y < ChunkSize.Y; y++)
+            {
+                for (int x = 0; x < ChunkSize.X; x++)
+                {
+                    ref MCChunk Chunk = ref Chunks[x + y * ChunkSize.X + z * ChunkSize.X * ChunkSize.Y];
+                    Chunk = new MCChunk();
+                    // žádné jiné transformace by pro chunk neměly proběhnout!!
+                    Chunk.Translate(new(x * MCChunk.FieldSize.X, y * MCChunk.FieldSize.Y, z * MCChunk.FieldSize.Z));
+                    SetChunkValues(Chunk, new(x, y, z), ref PerlinImage);
+
+                    AddChild(Chunk);
+
+                    Chunk.Mesh.SetSurfaceOverrideMaterial(0, MeshMaterial);
+                }
+            }
+        }
+
+        for (int z = 0; z < ChunkSize.Z; z++)
+        {
+            for (int y = 0; y < ChunkSize.Y; y++)
+            {
+                for (int x = 0; x < ChunkSize.X; x++)
+                {
+                    int index = x + y * ChunkSize.X + z * ChunkSize.X * ChunkSize.Y;
+                    Godot.ArrayMesh ArrMesh = MarchingCubes.CreateMesh2(this, new(x, y, z));
+                    Chunks[index].Mesh.Mesh = ArrMesh;
+                    //Chunks[index].CreateCollision();
+                }
+            }
+        }
+        */
+
+        Translate(new(0.0f, -24.0f, 0.0f));
+
+        //ChunkCollision1 = new MCChunkCollision();
+        //AddChild(ChunkCollision1);
+        //ChunkCollision1.SetChunkCollision(this, new(1, 1, 0));
+
+
+
+
+        ChunkField = new MCChunkField(new(4, 4, 4));
+        AddChild(ChunkField);
+        Image PerlinImage = noiseTexture.Noise.GetImage(ChunkField.ChunkFieldSize.X * MCChunk.FieldSize.X, ChunkField.ChunkFieldSize.Z * MCChunk.FieldSize.Z);
+        SetPerlinTerrain(ref ChunkField, ref PerlinImage);
+
+        CollisionField = new MCChunkCollisionField();
+        AddChild(CollisionField);
+        PlayerChunkPosition = new(0, 0, 0);
+
+        GD.Print("Generated Terrain");
+
+    }
+
+    public void UpdateIfColliding(GodotObject Collider, Vector3 Point, byte Amount, bool Subtract)
+    {
+        // nejdřív zkontrolujem zda vůbec kolidujem s terénem.
+        // -> pokud ano tak budem pokračovat dál - získáme lokální bod.
+        // -> pokud ne tak se vrátíme.
+        
+        if (!CollisionField.CheckIfColliding(Collider))
+        {
+            return;
+        }
+
+
+        Vector3 LocalPoint = Point - Transform.Origin;
+        Vector3I FieldPosition = new((int)Mathf.Round(LocalPoint.X), (int)Mathf.Round(LocalPoint.Y), (int)Mathf.Round(LocalPoint.Z));
+
+        // přidat  collider check !!!!!
+
+        // 3x3 grid
+        for (int z = FieldPosition.Z - 2; z < FieldPosition.Z + 2; z++)
+        {
+            for (int y = FieldPosition.Y - 2; y < FieldPosition.Y + 2; y++)
+            {
+                for (int x = FieldPosition.X - 2; x < FieldPosition.X + 2; x++)
+                {
+                    Vector3I CellPosition = new(x, y, z);
+                    Vector3 Distance = CellPosition - FieldPosition;
+                    float InvertDist = 1.0f / Distance.Length();
+                    if (InvertDist > 1.0f)
+                    {
+                        InvertDist = 1.0f;
+                    }
+                    byte InterpolatedAmount = Convert.ToByte(InvertDist * (float)Amount);
+                    //ModifyField(CellPosition, InterpolatedAmount, Subtract);
+                    if (Subtract)
+                    {
+                        ChunkField.AddValue(CellPosition, InterpolatedAmount);
+                    }
+                    else
+                    {
+                        
+                        ChunkField.SubtractValue(CellPosition, InterpolatedAmount);
+                    }
+                }
+            }
+        }
+
+        int[] ChunksToUpdate = new int[8] {
+            -1, -1, -1, -1, -1, -1, -1, -1
+        };
+        //ChunksToUpdate[0] = GetChunkIndex(new(FieldPosition.X - 3, FieldPosition.Y - 3, FieldPosition.Z - 3));
+        //ChunksToUpdate[1] = GetChunkIndex(new(FieldPosition.X + 3, FieldPosition.Y - 3, FieldPosition.Z - 3));
+        //ChunksToUpdate[2] = GetChunkIndex(new(FieldPosition.X - 3, FieldPosition.Y + 3, FieldPosition.Z - 3));
+        //ChunksToUpdate[3] = GetChunkIndex(new(FieldPosition.X + 3, FieldPosition.Y + 3, FieldPosition.Z - 3));
+        //ChunksToUpdate[4] = GetChunkIndex(new(FieldPosition.X - 3, FieldPosition.Y - 3, FieldPosition.Z + 3));
+        //ChunksToUpdate[5] = GetChunkIndex(new(FieldPosition.X + 3, FieldPosition.Y - 3, FieldPosition.Z + 3));
+        //ChunksToUpdate[6] = GetChunkIndex(new(FieldPosition.X - 3, FieldPosition.Y + 3, FieldPosition.Z + 3));
+        //ChunksToUpdate[7] = GetChunkIndex(new(FieldPosition.X + 3, FieldPosition.Y + 3, FieldPosition.Z + 3));
+        int empty_field_index = 0;
+        ChunkField.GetPointIndex(new(FieldPosition.X - 3, FieldPosition.Y - 3, FieldPosition.Z - 3), ref ChunksToUpdate[0], ref empty_field_index);
+        ChunkField.GetPointIndex(new(FieldPosition.X + 3, FieldPosition.Y - 3, FieldPosition.Z - 3), ref ChunksToUpdate[1], ref empty_field_index);
+        ChunkField.GetPointIndex(new(FieldPosition.X - 3, FieldPosition.Y + 3, FieldPosition.Z - 3), ref ChunksToUpdate[2], ref empty_field_index);
+        ChunkField.GetPointIndex(new(FieldPosition.X + 3, FieldPosition.Y + 3, FieldPosition.Z - 3), ref ChunksToUpdate[3], ref empty_field_index);
+        ChunkField.GetPointIndex(new(FieldPosition.X - 3, FieldPosition.Y - 3, FieldPosition.Z + 3), ref ChunksToUpdate[4], ref empty_field_index);
+        ChunkField.GetPointIndex(new(FieldPosition.X + 3, FieldPosition.Y - 3, FieldPosition.Z + 3), ref ChunksToUpdate[5], ref empty_field_index);
+        ChunkField.GetPointIndex(new(FieldPosition.X - 3, FieldPosition.Y + 3, FieldPosition.Z + 3), ref ChunksToUpdate[6], ref empty_field_index);
+        ChunkField.GetPointIndex(new(FieldPosition.X + 3, FieldPosition.Y + 3, FieldPosition.Z + 3), ref ChunksToUpdate[7], ref empty_field_index);
+
+        // podle začáteční a konečné pozice update fieldu zjistit všehcny zahrnuté chunky.
+        // podle testování rohů tohoto fieldu.
+        for (int i = 0; i < 8; i++)
+        {
+            if (ChunksToUpdate[i] != -1)
+            {
+
+                //ref MCChunk Chunk = ref Chunks[ChunksToUpdate[i]];
+                ref MCChunk Chunk = ref ChunkField.GetChunk(ChunksToUpdate[i]);
+                Vector3I ChunkPosition = new((int)Chunk.Position.X / MCChunk.FieldSize.X, (int)Chunk.Position.Y / MCChunk.FieldSize.Y, (int)Chunk.Position.Z / MCChunk.FieldSize.Z);
+                //Godot.ArrayMesh ArrMesh = MarchingCubes.CreateMesh2(this, ChunkPosition);
+                Godot.ArrayMesh ArrMesh = MarchingCubes.CreateMesh3(ref ChunkField, ChunkPosition);
+                Chunk.Mesh.Mesh = ArrMesh;
+                //Chunks[ChunksToUpdate[i]].CreateCollision();
+
+                // najít kolizi pro chunk
+                // update kolize. NEOPTIMÁLNÍ.
+                //if (ChunkPosition.X == (int)ChunkCollision1.Position.X / MCChunk.FieldSize.X && ChunkPosition.Y == (int)ChunkCollision1.Position.Y / MCChunk.FieldSize.Y && ChunkPosition.Z == (int)ChunkCollision1.Position.Z / MCChunk.FieldSize.Z)
+                //{
+                //    ChunkCollision1.SetChunkCollision(this, ChunkPosition);
+                //}
+                //ChunkCollision1.SetChunkCollision(this, ChunkPosition);
+
+                // update kolize chunku.
+                CollisionField.UpdateNearbyCollision(ref Chunk);
+
+                //GD.Print("Chunk updated: ", ChunkPosition);
+            }
+        }
+
+        //GD.Print("colliding");
+    }
+
+    /*
+    public void ModifyField(Vector3I Point, byte Amount, bool Subtract)
+    {
+
+        ref byte FieldValue = ref GetFieldValue(Point);
+
+        if (FieldValue <= 255 - Amount && Subtract)
+        {
+            FieldValue += Amount;
+        }
+        else if (FieldValue >= Amount && !Subtract)
+        {
+            FieldValue -= Amount;
+        }
+    }
+
+    //
+    //
+
+    private void SetChunkValues(MCChunk Chunk, Vector3I ChunkPosition, ref Image PerlinImage)
+    {
+        for (int z = 0; z < MCChunk.FieldSize.Z; z++)
+        {
+            for (int y = 0; y < MCChunk.FieldSize.Y; y++)
+            {
+                for (int x = 0; x < MCChunk.FieldSize.X; x++)
+                {
+                    Vector3I CellPosition = new(ChunkPosition.X * MCChunk.FieldSize.X + x, ChunkPosition.Y * MCChunk.FieldSize.Y + y, ChunkPosition.Z * MCChunk.FieldSize.Z + z);
+                    float TerrainHeight = PerlinImage.GetPixel(CellPosition.X, CellPosition.Z).R * 12.0f + 12.0f;
+
+                    if (CellPosition.Y > TerrainHeight)
+                    {
+                        int CellIndex = x + y * MCChunk.FieldSize.X + z * MCChunk.FieldSize.X * MCChunk.FieldSize.Y;
+
+                        if (CellPosition.Y - 1.0f < TerrainHeight)
+                        {
+                            float value = CellPosition.Y - TerrainHeight;
+                            Chunk.Field[CellIndex] = (byte)(255 * value);
+                        }
+                        else
+                        {
+                            Chunk.Field[CellIndex] = 255;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    */
+
+    //public ref byte GetFieldValue(Vector3I Position)
+    //{
+        //return ref NullFieldValue;
+        /*
+        // pozice chunku
+        // pokud chunk mimo range tak vrátí 0
+        Vector3I ChunkPosition = new(Position.X / MCChunk.FieldSize.X, Position.Y / MCChunk.FieldSize.Y, Position.Z / MCChunk.FieldSize.Z);
+        // tohle není moc hezké ale aspon bezpečné
+        if (ChunkPosition.X >= ChunkSize.X || ChunkPosition.Y >= ChunkSize.Y || ChunkPosition.Z >= ChunkSize.Z || Position.X < 0 || Position.Y < 0 || Position.Z < 0)
+        {
+            return ref NullFieldValue;
+        }
+        // index chunku
+        int ChunkIndex = ChunkPosition.X + ChunkPosition.Y * ChunkSize.X + ChunkPosition.Z * ChunkSize.X * ChunkSize.Y;
+        // pozice voxelu v chunku
+        Vector3I PositionInChunk = new(Position.X % MCChunk.FieldSize.X, Position.Y % MCChunk.FieldSize.Y, Position.Z % MCChunk.FieldSize.Z);
+        // index voxelu v chunku
+        int FieldIndex = PositionInChunk.X + PositionInChunk.Y * MCChunk.FieldSize.X + PositionInChunk.Z * MCChunk.FieldSize.X * MCChunk.FieldSize.Y;
+        // získá hodnotu v chunku.
+        return ref Chunks[ChunkIndex].Field[FieldIndex];*/
+    //}
+
+    // Získání indexu chunku ve kterém leží bod
+    /*
+    public int GetChunkIndex(Vector3I Position)
+    {
+        // pozice chunku
+        // pokud chunk mimo range tak vrátí 0
+        Vector3I ChunkPosition = new(Position.X / MCChunk.FieldSize.X, Position.Y / MCChunk.FieldSize.Y, Position.Z / MCChunk.FieldSize.Z);
+        // tohle není moc hezké ale aspon bezpečné
+        if (ChunkPosition.X >= ChunkSize.X || ChunkPosition.Y >= ChunkSize.Y || ChunkPosition.Z >= ChunkSize.Z || Position.X < 0 || Position.Y < 0 || Position.Z < 0)
+        {
+            return -1;
+        }
+        // index chunku
+        int ChunkIndex = ChunkPosition.X + ChunkPosition.Y * ChunkSize.X + ChunkPosition.Z * ChunkSize.X * ChunkSize.Y;
+        return ChunkIndex;
+    }*/
+
+
+    public void UpdatePovPosition(Vector3 PlayerPosition)
+    {
+        
+        // lokální pozice relativní k MCTerrain bodu
+        Vector3 LocalPosition = PlayerPosition - this.Position;
+        // vygenerovat collision pro chunk pokud do něj hráč zrovna přešel.
+        Vector3I ChunkPosition = (Vector3I)(LocalPosition / (Vector3)MCChunk.FieldSize).Floor();
+        // check zda se hráč přesunul do nového chunku
+        // pokud ne tak se nic neděje.
+        if (ChunkPosition == PlayerChunkPosition)
+        {
+            return;
+        }
+        PlayerChunkPosition = ChunkPosition;
+
+        //
+        // Hráč vstoupil do nového chunku.
+        //
+
+
+        GD.Print("player stepped into new chunk");
+
+        CollisionField.UpdateCollisionPov(ref ChunkField, PlayerChunkPosition);
+
+
+        // update LOD chunků
+        // bude potřeba:
+        // -> vytvořit chunky nezávislé na pozici v array
+        // -> vědět jaké chunky by měly změnit své lod.
+        // -> marching cubes s různým lod
+
+    }
+
+
+    private void SetPerlinTerrain(ref MCChunkField ChunkField, ref Image PerlinImage)
+    {
+        for (int z = 0; z < ChunkField.ChunkFieldSize.Z * MCChunk.FieldSize.Z; z++)
+        {
+            for (int y = 0; y < ChunkField.ChunkFieldSize.Y * MCChunk.FieldSize.Y; y++)
+            {
+                for (int x = 0; x < ChunkField.ChunkFieldSize.X * MCChunk.FieldSize.X; x++)
+                {
+                    Vector3I ChunkPosition = new(x, y, z);
+                    if (y > 2)
+                    {
+                        //ChunkField.SetValue(ChunkPosition, 255);
+                    }
+                    else
+                    {
+                        //ChunkField.SetValue(ChunkPosition, 0);
+                    }
+
+                }
+            }
+        }
+        for (int z = 0; z < ChunkField.ChunkFieldSize.Z; z++)
+        {
+            for (int y = 0; y < ChunkField.ChunkFieldSize.Y; y++)
+            {
+                for (int x = 0; x < ChunkField.ChunkFieldSize.X; x++)
+                {
+                    Vector3I ChunkPosition = new(x, y, z);
+                    int ChunkIndex = ChunkField.GetChunkIndex(ChunkPosition);
+                    ref MCChunk Chunk = ref ChunkField.GetChunk(ChunkIndex);
+                    SetPerlinChunk(ref Chunk, ChunkPosition, ref PerlinImage);
+                    Godot.ArrayMesh ArrMesh = MarchingCubes.CreateMesh3(ref ChunkField, new(x, y, z));
+                    Chunk.Mesh.Mesh = ArrMesh;
+                }
+            }
+        }
+        
+        for (int z = 0; z < ChunkField.ChunkFieldSize.Z; z++)
+        {
+            for (int y = 0; y < ChunkField.ChunkFieldSize.Y; y++)
+            {
+                for (int x = 0; x < ChunkField.ChunkFieldSize.X; x++)
+                {
+                    Vector3I ChunkPosition = new(x, y, z);
+                    int ChunkIndex = ChunkField.GetChunkIndex(ChunkPosition);
+                    ref MCChunk Chunk = ref ChunkField.GetChunk(ChunkIndex);
+                    Godot.ArrayMesh ArrMesh = MarchingCubes.CreateMesh3(ref ChunkField, new(x, y, z));
+                    Chunk.Mesh.Mesh = ArrMesh;
+                }
+            }
+        }
+    }
+    private void SetPerlinChunk(ref MCChunk Chunk, Vector3I ChunkPosition, ref Image PerlinImage)
+    {
+        for (int z = 0; z < MCChunk.FieldSize.Z; z++)
+        {
+            for (int y = 0; y < MCChunk.FieldSize.Y; y++)
+            {
+                for (int x = 0; x < MCChunk.FieldSize.X; x++)
+                {
+                    Vector3I CellPosition = new(ChunkPosition.X * MCChunk.FieldSize.X + x, ChunkPosition.Y * MCChunk.FieldSize.Y + y, ChunkPosition.Z * MCChunk.FieldSize.Z + z);
+                    float TerrainHeight = PerlinImage.GetPixel(CellPosition.X, CellPosition.Z).R * 12.0f + 12.0f;
+
+                    if (CellPosition.Y > TerrainHeight)
+                    {
+                        int CellIndex = x + y * MCChunk.FieldSize.X + z * MCChunk.FieldSize.X * MCChunk.FieldSize.Y;
+
+                        if (CellPosition.Y - 1.0f < TerrainHeight)
+                        {
+                            float value = CellPosition.Y - TerrainHeight;
+                            Chunk.Field[CellIndex] = (byte)(255 * value);
+                        }
+                        else
+                        {
+                            Chunk.Field[CellIndex] = 255;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// https://www.youtube.com/watch?v=5CKvGYqagyI

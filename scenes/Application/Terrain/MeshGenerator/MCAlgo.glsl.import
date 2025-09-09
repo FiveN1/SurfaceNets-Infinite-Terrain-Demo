@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://crbmqfbrftkgx"
+path="res://.godot/imported/MCAlgo.glsl-d48bc6666f691a825edbcecc112269ae.res"
+
+[deps]
+
+source_file="res://scenes/Application/Terrain/MeshGenerator/MCAlgo.glsl"
+dest_files=["res://.godot/imported/MCAlgo.glsl-d48bc6666f691a825edbcecc112269ae.res"]
+
+[params]
+

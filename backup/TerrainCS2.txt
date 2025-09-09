@@ -1,0 +1,360 @@
+using Godot;
+using System;
+using System.IO.IsolatedStorage;
+
+/*
+*
+*
+*
+*
+*
+*
+*/
+
+public partial class Terrain : Node3D
+{
+
+    [Export] NoiseTexture2D noiseTexture;
+
+    private float[] Field;
+    Vector3I FieldSize;
+
+
+    public MeshInstance3D MarchingCubesMesh;
+    StaticBody3D MarchingCubesCollison;
+
+    CollisionShape3D MarchingCubesCollisionShape;
+
+
+    MCChunk Chunk1;
+
+
+    MCChunk[] Chunks;
+    Vector3I ChunkSize;
+
+    float t;
+
+    //
+    //
+    //
+
+    private int[,] TriangleTable;
+
+    public override void _Ready()
+    {
+        // určíme velikost pole/chunku
+        FieldSize = new Vector3I(16, 16, 16);
+        // marching cubes voxel data
+        // 3D textura.
+        Field = new float[FieldSize.X * FieldSize.Y * FieldSize.Z];
+        //Field[0] = 0.6f;
+        //Field[1] = 1.0f;
+        t = 0.0f;
+
+        Vector3 Point = new Vector3(8.0f, 8.0f, 8.0f);
+        float dist = (GD.Randi() % 100) * 0.1f;
+        for (uint z = 0; z < FieldSize.Z; z++)
+        {
+            for (uint y = 0; y < FieldSize.Y; y++)
+            {
+                for (uint x = 0; x < FieldSize.X; x++)
+                {
+                    uint CellIndex = x + y * (uint)FieldSize.X + z * (uint)FieldSize.X * (uint)FieldSize.Y;
+                    Vector3 CellPosition = new Vector3((float)x, (float)y, (float)z);
+                    Vector3 Distance = CellPosition - Point;
+                    Field[CellIndex] = Distance.Length() - 4.0f;
+                }
+            }
+        }
+
+        //
+        //
+        //
+
+        byte b = 255;
+        GD.Print("byte: ", b);
+
+        Material MeshMaterial = ResourceLoader.Load<Material>("res://materials/material1.tres");
+
+        Godot.ArrayMesh arrMesh = GenerateMeshData2(100);
+
+
+
+        MeshInstance3D GeneratedMesh = new MeshInstance3D();
+        GeneratedMesh.Mesh = arrMesh;
+        GeneratedMesh.SetSurfaceOverrideMaterial(0, MeshMaterial);
+        GeneratedMesh.CreateTrimeshCollision();
+        AddChild(GeneratedMesh);
+
+
+        MarchingCubesMesh = new MeshInstance3D();
+        MarchingCubesMesh.Translate(new(-10.0f, -10.0f, 0.0f));
+        //MarchingCubesMesh.SetSurfaceOverrideMaterial(0, MeshMaterial);
+        AddChild(MarchingCubesMesh);
+
+        Godot.ArrayMesh arrMesh2 = MarchingCubes.CreateMesh(Field, FieldSize, 0.5f);
+        MarchingCubesMesh.Mesh = arrMesh2;
+        //MarchingCubesMesh.CreateTrimeshCollision();
+
+        //MarchingCubesCollisionShape.Shape
+        //MarchingCubesCollisionShape.
+
+
+        MarchingCubesCollison = new StaticBody3D();
+        MarchingCubesMesh.AddChild(MarchingCubesCollison);
+
+        MarchingCubesCollisionShape = new CollisionShape3D();
+        MarchingCubesCollisionShape.Shape = arrMesh2.CreateTrimeshShape();
+        MarchingCubesCollison.AddChild(MarchingCubesCollisionShape);
+
+
+        //MarchingCubesCollison = MarchingCubesMesh.GetChild<StaticBody3D>(0, false);
+        //arrMesh2.CreateTrimeshShape();
+        //MarchingCubesCollison = null;
+        GD.Print("Terrain: generated, collision:", MarchingCubesCollison);
+
+
+
+
+
+
+        Chunk1 = new MCChunk();
+        Chunk1.Translate(new(-15.0f, -4.0f, 0.0f));
+
+        // ...
+        for (uint z = 0; z < Chunk1.FieldSize.Z; z++)
+        {
+            for (uint y = 0; y < Chunk1.FieldSize.Y; y++)
+            {
+                for (uint x = 0; x < Chunk1.FieldSize.X; x++)
+                {
+                    if (y > 2)
+                    {
+                        uint CellIndex = x + y * (uint)Chunk1.FieldSize.X + z * (uint)Chunk1.FieldSize.X * (uint)Chunk1.FieldSize.Y;
+                        Chunk1.Field[CellIndex] = 255;
+                    }
+                }
+            }
+        }
+
+        AddChild(Chunk1);
+
+        Chunk1.AddMaterial(new(2.0f, 8.5f, 2.0f));
+
+        ChunkSize = new(2, 1, 2);
+        Chunks = new MCChunk[ChunkSize.X * ChunkSize.Y * ChunkSize.Z];
+        //
+        // nastavení pozic
+        // nastavení dat.
+
+
+        for (int z = 0; z < ChunkSize.Z; z++)
+        {
+            for (int y = 0; y < ChunkSize.Y; y++)
+            {
+                for (int x = 0; x < ChunkSize.X; x++)
+                {
+                    GD.Print("index: ", x + y * ChunkSize.X + z * ChunkSize.X * ChunkSize.Y);
+                    ref MCChunk Chunk = ref Chunks[x + y * ChunkSize.X + z * ChunkSize.X * ChunkSize.Y];
+                    Chunk = new MCChunk();
+                    // Chunks[x + y * ChunkSize.X + z * ChunkSize.X * ChunkSize.Y];
+                    Chunk.Translate(new(x * 15, y * 15 - 4.0f, z * 15));
+                    SetupChunk(Chunk);
+                    AddChild(Chunk);
+                }
+            }
+        }
+    }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        /*
+        return;
+        //base._PhysicsProcess(delta);
+
+        Vector3 Point = new Vector3(8.0f, 8.0f, 8.0f);
+        float dist = (GD.Randi() % 100) * 0.1f;
+        for (uint z = 0; z < FieldSize.Z; z++)
+        {
+            for (uint y = 0; y < FieldSize.Y; y++)
+            {
+                for (uint x = 0; x < FieldSize.X; x++)
+                {
+                    uint CellIndex = x + y * (uint)FieldSize.X + z * (uint)FieldSize.X * (uint)FieldSize.Y;
+                    Vector3 CellPosition = new Vector3((float)x, (float)y, (float)z);
+                    Vector3 Distance = CellPosition - Point;
+                    Field[CellIndex] = Distance.Length() - (Mathf.Sin(t) + 1.0f) * 4.0f;
+                    Mathf.Sin(t);
+                }
+            }
+        }
+        t += 0.005f;
+
+        Godot.ArrayMesh arrMesh2 = MarchingCubes.CreateMesh(Field, FieldSize, 0.5f);
+        MarchingCubesMesh.Mesh = arrMesh2;
+        */
+    }
+
+
+    public StaticBody3D GetCollider()
+    {
+        return MarchingCubesCollison;
+    }
+
+    public bool CheckIfColliding(GodotObject Collider)
+    {
+        if (Collider == Chunk1.GetCollider())
+        {
+            return true;
+        }
+
+        
+        
+
+        return false;
+    }
+
+    public void AddTerrain(Vector3 Point)
+    {
+        Vector3 local = Chunk1.GlobalToLocalCoord(Point);
+        Vector3 PP = new(Mathf.Round(local.X), Mathf.Round(local.Y), Mathf.Round(local.Z));
+        Chunk1.AddMaterial(Chunk1.GlobalToLocalCoord(Point));
+
+        // najde chunk o který se jedná.
+        // normalizuje bod do chunku.
+        // pokud je bod na hranici updatene se i vedlejší chuk.
+
+
+
+    }
+
+    public void UpdateIfColliding(GodotObject Collider, Vector3 Point, byte Amount, bool Subtract)
+    {
+        for (int i = 0; i < ChunkSize.X * ChunkSize.Y * ChunkSize.Z; i++)
+        {
+            ref MCChunk Chunk = ref Chunks[i];
+            if (Collider == Chunk.GetCollider())
+            {
+                Vector3 local = Chunks[i].GlobalToLocalCoord(Point);
+                Chunks[i].ModifyField(local, Amount, Subtract);
+            }
+        }
+    }
+
+    public void RemoveTerrain(Vector3 Point)
+    {
+        //Chunk1.RemoveMaterial(Chunk1.GlobalToLocalCoord(Point));
+    }
+
+    //
+    //
+    //
+
+
+    private void SetupChunk(MCChunk Chunk)
+    {
+        for (uint z = 0; z < Chunk.FieldSize.Z; z++)
+        {
+            for (uint y = 0; y < Chunk.FieldSize.Y; y++)
+            {
+                for (uint x = 0; x < Chunk.FieldSize.X; x++)
+                {
+                    if (y > 2)
+                    {
+                        uint CellIndex = x + y * (uint)Chunk.FieldSize.X + z * (uint)Chunk.FieldSize.X * (uint)Chunk.FieldSize.Y;
+                        Chunk.Field[CellIndex] = 255;
+                    }
+                }
+            }
+        }
+    }
+
+    private Godot.ArrayMesh GenerateMeshData2(int size)
+    {
+
+        // define
+        Vector3[] vertices = new Vector3[(size - 1) * (size - 1) * 6];
+        Vector3[] normals = new Vector3[(size - 1) * (size - 1) * 6];
+        int[] indices = new int[(size - 1) * (size - 1) * 6];
+
+
+        float[] height_map = new float[size * size];
+
+
+
+        //Image image1 = noiseTexture.GetImage();
+        //byte[] data = image.GetData();
+        Image image1 = noiseTexture.Noise.GetImage(size, size);
+        //Noise noise1 = noiseTexture.Noise;
+        GD.Print(image1.GetWidth());
+        GD.Print(image1.GetPixel(0, 0));
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                //GD.Print(image.GetPixel(x, y));
+                //height_map[x + y * size] = (GD.Randi() % 100) * 0.01f - 1.0f;
+                height_map[x + y * size] = image1.GetPixel(x, y).R * 10.0f - 10.0f;
+            }
+        }
+        // vertices
+        for (int y = 0; y < size - 1; y++)
+        {
+            for (int x = 0; x < size - 1; x++)
+            {
+
+                int i = (x + y * (size - 1)) * 6;
+                vertices[i] = new Vector3(x, height_map[x + y * size], y);
+                vertices[i + 1] = new Vector3(x + 1, height_map[x + 1 + y * size], y);
+                vertices[i + 2] = new Vector3(x, height_map[x + (y + 1) * size], y + 1);
+
+                vertices[i + 3] = new Vector3(x + 1, height_map[x + 1 + y * size], y);
+                vertices[i + 4] = new Vector3(x + 1, height_map[x + 1 + (y + 1) * size], y + 1);
+                vertices[i + 5] = new Vector3(x, height_map[x + (y + 1) * size], y + 1);
+
+
+                Vector3 v1 = vertices[i + 1] - vertices[i];
+                Vector3 v2 = vertices[i + 2] - vertices[i];
+                Vector3 cross1 = v2.Cross(v1);
+                cross1 = cross1.Normalized();
+
+                normals[i] = cross1;
+                normals[i + 1] = cross1;
+                normals[i + 2] = cross1;
+
+                Vector3 v3 = vertices[i + 1] - vertices[i + 4];
+                Vector3 v4 = vertices[i + 2] - vertices[i + 4];
+                Vector3 cross2 = v3.Cross(v4);
+                cross2 = cross2.Normalized();
+
+                normals[i + 3] = cross2;
+                normals[i + 4] = cross2;
+                normals[i + 5] = cross2;
+
+
+
+                indices[i] = i;
+                indices[i + 1] = i + 1;
+                indices[i + 2] = i + 2;
+
+                indices[i + 3] = i + 3;
+                indices[i + 4] = i + 4;
+                indices[i + 5] = i + 5;
+
+            }
+        }
+
+
+        Godot.ArrayMesh arrMesh = new ArrayMesh();
+        Godot.Collections.Array arrays = [];
+        arrays.Resize((int)Mesh.ArrayType.Max);
+        arrays[(int)Mesh.ArrayType.Vertex] = vertices;
+        arrays[(int)Mesh.ArrayType.Normal] = normals;
+        //arrays[(int)Mesh.ArrayType.Index] = indices;
+        arrMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
+        return arrMesh;
+    }
+}
+
+// https://www.youtube.com/watch?v=5CKvGYqagyI

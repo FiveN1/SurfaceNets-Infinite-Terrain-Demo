@@ -1,0 +1,226 @@
+using Godot;
+using System;
+
+public struct TransVoxelMeshData
+{
+    public Vector3[] vertices;
+    public Vector3[] normals;
+    public int[] indices;
+
+
+    public int previousVertPositionEnd = 0;
+    public int previousVertIndexEnd = 0;
+
+    public TransVoxelMeshData(Vector3I fieldSize)
+    {
+        // Toto nejsou opravdové velikosti fieldu ale maximální hodnota kterou "je" možné dosáhnout
+        int maximumVeretxArraySize = (fieldSize.X - 1) * (fieldSize.Y - 1) * (fieldSize.Z - 1) * 12;
+        int maximumIndexArraySize = (fieldSize.X - 1) * (fieldSize.Y - 1) * (fieldSize.Z - 1) * 15;
+        // vytvoříme pole
+        vertices = new Vector3[maximumVeretxArraySize];
+        normals = new Vector3[maximumVeretxArraySize];
+        indices = new int[maximumIndexArraySize];
+    }
+}
+
+public partial class TransVoxelDemo : Node3D
+{
+    public TransVoxelDemo()
+    {
+
+
+    }
+
+    public override void _Ready()
+    {
+        base._Ready();
+
+
+        byte[] highResSide = new byte[9] {
+            0, 0, 0,
+            0, 0, 0,
+            0, 0, 0
+        };
+
+        byte[] lowResSide = new byte[4] {
+            255, 0,
+            255, 0
+        };
+
+        Vector3I regularFieldSize = new(3, 2, 2);
+        byte[] regularField = new byte[regularFieldSize.X * regularFieldSize.Y * regularFieldSize.Z];
+        for (int i = 0; i < regularFieldSize.X * regularFieldSize.Y * regularFieldSize.Z; i++)
+        {
+            regularField[i] = 0;
+        }
+
+        for (int y = 0; y < regularFieldSize.Y; y++)
+        {
+            for (int x = 0; x < regularFieldSize.X; x++)
+            {
+                //regularField[x + y * regularFieldSize.X] = 255;
+            }
+        }
+        //regularField[0] = 255;
+        regularField[1] = 255;
+        //regularField[4] = 255;
+        //regularField[2] = 255;
+
+
+        MeshInstance3D mesh = new MeshInstance3D();
+        mesh.Mesh = GenerateMesh(ref regularField, regularFieldSize, 128);
+        AddChild(mesh);
+
+    }
+
+    public static Godot.ArrayMesh GenerateMesh(ref byte[] field, Vector3I fieldSize,  byte isoLevel)
+    {
+        TransVoxelMeshData meshData = new TransVoxelMeshData(fieldSize);
+
+        for (int z = 0; z < fieldSize.Z - 1; z++)
+        {
+            for (int y = 0; y < fieldSize.Y - 1; y++)
+            {
+                for (int x = 0; x < fieldSize.X - 1; x++)
+                {
+                    GenerateRegularCellMeshData(new(x, y, z), ref field, fieldSize, isoLevel, ref meshData);
+                }
+            }
+        }
+        // normals
+        for (int i = 0; i < meshData.indices.Length / 3; i += 3)
+        {
+            int index0 = meshData.indices[i];
+            int index1 = meshData.indices[i + 1];
+            int index2 = meshData.indices[i + 2];
+
+            Vector3 vert1 = meshData.vertices[index0];
+            Vector3 vert2 = meshData.vertices[index1];
+            Vector3 vert3 = meshData.vertices[index2];
+
+            Vector3 normal = (vert3 - vert1).Cross(vert2 - vert1).Normalized();
+            // set indices!!
+            meshData.normals[index0] += normal;
+            meshData.normals[index1] += normal;
+            meshData.normals[index2] += normal;
+
+            // dík: https://computergraphics.stackexchange.com/questions/4031/programmatically-generating-vertex-normals
+        }
+        for (int i = 0; i < meshData.normals.Length; i++)
+        {
+            meshData.normals[i] = meshData.normals[i].Normalized();
+        }
+
+        
+        
+        GD.Print("vertices: ");
+        for (int i = 0; i < meshData.vertices.Length; i++)
+        {
+            GD.Print(meshData.vertices[i], ", ");
+        }
+        GD.Print("normals: ");
+        for (int i = 0; i < meshData.normals.Length; i++)
+        {
+            GD.Print(meshData.normals[i], ", ");
+        }
+        GD.Print("indices: ");
+        for (int i = 0; i < meshData.indices.Length; i++)
+        {
+            GD.Print(meshData.indices[i], ", ");
+        }
+        
+
+
+
+        Godot.ArrayMesh arrayMesh = new ArrayMesh();
+        Godot.Collections.Array arrays = [];
+        arrays.Resize((int)Mesh.ArrayType.Max);
+        arrays[(int)Mesh.ArrayType.Vertex] = meshData.vertices;
+        arrays[(int)Mesh.ArrayType.Normal] = meshData.normals;
+        arrays[(int)Mesh.ArrayType.Index] = meshData.indices;
+        arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
+        return arrayMesh;
+    }
+
+    // Přemění index ve čtverci do 3D pozice
+    // Radši použít lookup table !!
+    public static Vector3I IDTo3V(ushort index)
+    {
+        return new Vector3I(index % 2, (int)(index / 2) % 2, index / 4); // Z je nahoru
+        //return new Vector3I(index % 2, index / 4, (int)(index / 2) % 2); // Y je nahoru
+    }
+
+    public static void GenerateRegularCellMeshData(Vector3I cellPosition, ref byte[] field, Vector3I fieldSize, byte isoLevel, ref TransVoxelMeshData meshData)
+    {
+        GD.Print("New Cell: ", cellPosition);
+        // base index of cell in field
+        int cellIndex = cellPosition.X + cellPosition.Y * fieldSize.X + cellPosition.Z * fieldSize.X * fieldSize.Y;
+        // get casecode for cell
+        int caseCode = (
+              (field[cellIndex + 0] > isoLevel ? 0x01 : 0)
+            | (field[cellIndex + 1] > isoLevel ? 0x02 : 0)
+            | (field[cellIndex + fieldSize.X] > isoLevel ? 0x04 : 0)
+            | (field[cellIndex + 1 + fieldSize.X] > isoLevel ? 0x08 : 0)
+            | (field[cellIndex + fieldSize.X * fieldSize.Y] > isoLevel ? 0x10 : 0)
+            | (field[cellIndex + fieldSize.X * fieldSize.Y + 1] > isoLevel ? 0x20 : 0)
+            | (field[cellIndex + fieldSize.X * fieldSize.Y + fieldSize.X] > isoLevel ? 0x40 : 0)
+            | (field[cellIndex + fieldSize.X * fieldSize.Y + fieldSize.X + 1] > isoLevel ? 0x80 : 0));
+        // if cell  empty   
+        if (caseCode == 0 || caseCode == 255) {
+            return;
+        }
+        // get data about mesh data in cell
+        int shapeCase = MCTables.Tables.RegularCellClass[caseCode];
+        ref var cellData = ref MCTables.Tables.RegularCellData[shapeCase];
+        ref ushort[] edgeCodes = ref MCTables.Tables.RegularVertexData[caseCode];
+        long vertexCount = cellData.GetVertexCount();
+        long triangleCount = cellData.GetTriangleCount();
+        //GD.Print("Vertex Count: ", vertexCount, " Triangle Count:", triangleCount, "Index Count: ", cellData.Indices().Length);
+
+        // vertices
+        for (int i = 0; i < vertexCount; i++)
+        {
+            // get cell vertex data
+            ushort edgeCode = edgeCodes[i];
+            ushort cornerId0 = (ushort)((edgeCode >> 4) & 0x0F);
+            ushort cornerId1 = (ushort)(edgeCode & 0x0F);
+            Vector3I cornerV0 = IDTo3V(cornerId0);
+            Vector3I cornerV1 = IDTo3V(cornerId1);
+            // interpolation between field values
+            byte value1 = field[cellIndex + cornerV0.X + cornerV0.Y * fieldSize.X + cornerV0.Z * fieldSize.X * fieldSize.Y];
+            byte value2 = field[cellIndex + cornerV1.X + cornerV1.Y * fieldSize.X + cornerV1.Z * fieldSize.X * fieldSize.Y];
+            float InteroplatedScale = Mathf.Abs((float)isoLevel - (float)value1) / Mathf.Abs((float)value1 - (float)value2);
+            // calculate vertex position
+            Vector3 vertexPosition = cellPosition + ((Vector3)cornerV1 - (Vector3)cornerV0) * InteroplatedScale + (Vector3)cornerV0;
+            GD.Print("Code: ", edgeCode, " index1: ", cornerId0, ", ", IDTo3V(cornerId0), "  index2: ", cornerId1, ", ", IDTo3V(cornerId1), " vertpos: ", vertexPosition);
+            // set vertex position
+            meshData.vertices[meshData.previousVertPositionEnd + i] = vertexPosition;
+        }
+        // indices
+        for (int i = 0; i < cellData.Indices().Length; i++)
+        {
+            int vertIndex = meshData.previousVertPositionEnd + cellData.Indices()[i];
+            //GD.Print("vert index: ", vertIndex);
+            // set
+            meshData.indices[meshData.previousVertIndexEnd + i] = vertIndex;
+        }
+        //GD.Print("vert end: ", meshData.previousVertPositionEnd, " vert index end: ", meshData.previousVertIndexEnd);
+        // update mesh data endpoint 
+        meshData.previousVertPositionEnd += (int)vertexCount;
+        meshData.previousVertIndexEnd += cellData.Indices().Length;
+    }
+
+}
+
+/*
+* Zdroje:
+*
+* https://transvoxel.org/
+* https://www.reddit.com/r/VoxelGameDev/comments/gswau4/how_to_use_transvoxel_tables_in_marching_cubes/
+* https://www.reddit.com/r/VoxelGameDev/comments/15xf1ne/transvoxel_algorithm_implementation_in_unity/?share_id=crevearrxGn77IkEdhTuM&utm_content=1&utm_medium=android_app&utm_name=androidcss&utm_source=share&utm_term=1
+* https://github.com/bbQsauce5/transvoxel-unity/blob/main/Runtime/Mesher/TransvoxelTables.cs
+* https://computergraphics.stackexchange.com/questions/4031/programmatically-generating-vertex-normals
+* https://www.reddit.com/r/proceduralgeneration/comments/12gitbp/reusing_vertices_while_using_marching/
+*
+*
+*/

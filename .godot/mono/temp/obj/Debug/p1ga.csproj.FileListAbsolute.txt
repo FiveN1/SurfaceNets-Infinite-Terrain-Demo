@@ -1,0 +1,17 @@
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\bin\Debug\p1ga.deps.json
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\bin\Debug\p1ga.runtimeconfig.json
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\bin\Debug\p1ga.dll
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\bin\Debug\p1ga.pdb
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\bin\Debug\GodotSharp.dll
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\bin\Debug\GodotSharpEditor.dll
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\p1ga.csproj.AssemblyReference.cache
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\p1ga.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\p1ga.AssemblyInfoInputs.cache
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\p1ga.AssemblyInfo.cs
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\p1ga.csproj.CoreCompileInputs.cache
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\p1ga.csproj.Up2Date
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\p1ga.dll
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\refint\p1ga.dll
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\p1ga.pdb
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\p1ga.genruntimeconfig.cache
+C:\Users\tomas\Documents\Godot\Projects\p1ga\.godot\mono\temp\obj\Debug\ref\p1ga.dll

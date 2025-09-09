@@ -1,0 +1,158 @@
+[gd_scene load_steps=19 format=3 uid="uid://c5pd7m4pxc4r2"]
+
+[ext_resource type="Script" uid="uid://drx5a6n1hh58v" path="res://scenes/Application/Application.cs" id="1_lmbyv"]
+[ext_resource type="PackedScene" uid="uid://d30nm8h5ixhys" path="res://scenes/Application/Player/Player.tscn" id="2_puocm"]
+[ext_resource type="Shader" uid="uid://diuuygs121kca" path="res://scenes/Application/Terrain/Octree/Node/Debug/NodeDebugShader.gdshader" id="3_puocm"]
+[ext_resource type="Script" uid="uid://van5fxqjinka" path="res://scenes/Application/World/World.cs" id="6_00nah"]
+[ext_resource type="PackedScene" uid="uid://kdanuhwvoedi" path="res://scenes/Application/Terrain/Terrain.tscn" id="6_jfhc7"]
+[ext_resource type="Script" uid="uid://c28nqd2etyppg" path="res://scenes/Application/UI/Ui.cs" id="6_lmbyv"]
+[ext_resource type="Texture2D" uid="uid://cnkb3rn7lwm5p" path="res://assets/cursor2.png" id="7_g24vp"]
+[ext_resource type="PackedScene" uid="uid://r5187ga282u8" path="res://scenes/Application/Terrain/WorldGenerator/WorldGenerator.tscn" id="8_bibs7"]
+[ext_resource type="PackedScene" uid="uid://dmn7yslq3d7f7" path="res://scenes/TransVoxelDemo/TransVoxelDemo.tscn" id="11_puocm"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_4llxv"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bibs7"]
+render_priority = 0
+shader = ExtResource("3_puocm")
+shader_parameter/color = Color(0.192451, 0.850185, 0.497093, 1)
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_00nah"]
+ground_bottom_color = Color(0.587201, 0.13702, 0.153875, 1)
+ground_horizon_color = Color(0.714934, 0.637033, 0.593905, 1)
+ground_curve = 0.331287
+
+[sub_resource type="Sky" id="Sky_j3gmf"]
+sky_material = SubResource("ProceduralSkyMaterial_00nah")
+
+[sub_resource type="Environment" id="Environment_1frhs"]
+background_mode = 2
+background_color = Color(0, 0, 1, 1)
+sky = SubResource("Sky_j3gmf")
+fog_light_color = Color(0.539172, 0.698152, 0.971089, 1)
+fog_light_energy = 0.24
+fog_sky_affect = 0.0
+adjustment_enabled = true
+adjustment_contrast = 1.5
+adjustment_saturation = 1.1
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_1i0c2"]
+size = Vector2(5, 5)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_1i0c2"]
+data = PackedVector3Array(2.5, 0, 2.5, -2.5, 0, 2.5, 2.5, 0, -2.5, -2.5, 0, 2.5, -2.5, 0, -2.5, 2.5, 0, -2.5)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_00nah"]
+frequency = 0.0264
+
+[sub_resource type="LabelSettings" id="LabelSettings_1i0c2"]
+font_size = 32
+
+[node name="Application" type="Node"]
+script = ExtResource("1_lmbyv")
+
+[node name="3D" type="Node3D" parent="."]
+
+[node name="Player" parent="3D" instance=ExtResource("2_puocm")]
+transform = Transform3D(-0.62932, 0, -0.777146, 0, 1, 0, 0.777146, 0, -0.62932, 0, 0, 0)
+terrainPath = NodePath("../Terrain")
+speed = 2000.0
+
+[node name="mesh1" type="MeshInstance3D" parent="3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.58079, 0.355369, -0.335957)
+mesh = SubResource("BoxMesh_4llxv")
+surface_material_override/0 = SubResource("ShaderMaterial_bibs7")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="3D"]
+transform = Transform3D(0.174832, -0.611502, 0.771686, 0.412116, 0.757247, 0.506692, -0.8942, 0.229438, 0.384401, 2.43698, 0, 0)
+shadow_opacity = 0.9
+shadow_blur = 0.8
+directional_shadow_mode = 0
+directional_shadow_split_1 = 1.0
+
+[node name="DirectionalLight3D2" type="DirectionalLight3D" parent="3D"]
+transform = Transform3D(-0.524357, -0.361071, -0.771152, -0.104215, 0.926048, -0.362735, 0.845097, -0.109835, -0.523209, 2.43698, 0, 0)
+light_energy = 0.1
+shadow_blur = 0.8
+directional_shadow_mode = 0
+directional_shadow_split_1 = 1.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="3D"]
+environment = SubResource("Environment_1frhs")
+
+[node name="Floor" type="MeshInstance3D" parent="3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 0)
+mesh = SubResource("PlaneMesh_1i0c2")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="3D/Floor"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="3D/Floor/StaticBody3D"]
+shape = SubResource("ConcavePolygonShape3D_1i0c2")
+
+[node name="Terrain" parent="3D" instance=ExtResource("6_jfhc7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -300, 0)
+PlayerPath = NodePath("../Player")
+WorldGeneratorPath = NodePath("../WorldGenerator")
+
+[node name="WorldGenerator" parent="3D" instance=ExtResource("8_bibs7")]
+Noise3 = SubResource("FastNoiseLite_00nah")
+Noise3Intensity = 16.0
+TerrainBaseHeight = 1.0
+
+[node name="World" type="Node" parent="3D"]
+script = ExtResource("6_00nah")
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1440.0
+offset_bottom = 1080.0
+script = ExtResource("6_lmbyv")
+fpsCounterPath = NodePath("FpsCounter")
+
+[node name="FpsCounter" type="Label" parent="UI"]
+top_level = true
+layout_mode = 0
+offset_right = 173.0
+offset_bottom = 45.0
+text = "0fps"
+label_settings = SubResource("LabelSettings_1i0c2")
+
+[node name="Version" type="Label" parent="UI"]
+visible = false
+layout_mode = 0
+offset_top = 1035.0
+offset_right = 240.0
+offset_bottom = 1080.0
+text = "Verze 03072025"
+label_settings = SubResource("LabelSettings_1i0c2")
+
+[node name="Tip" type="Label" parent="UI"]
+visible = false
+layout_mode = 0
+offset_top = 45.0
+offset_right = 240.0
+offset_bottom = 90.0
+text = "WSAD Jump
+Tlačítka myši pro upravu terénu
+E pro teleport
+V pro Vsync"
+label_settings = SubResource("LabelSettings_1i0c2")
+
+[node name="Cursor" type="Sprite2D" parent="UI"]
+position = Vector2(960, 540)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("7_g24vp")
+
+[node name="Panel" type="Panel" parent="UI"]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="SaveSystem" type="Node" parent="."]
+
+[node name="Demo" type="Node" parent="."]
+
+[node name="TransVoxelDemo" parent="Demo" instance=ExtResource("11_puocm")]
+visible = false

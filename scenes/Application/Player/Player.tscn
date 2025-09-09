@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://d30nm8h5ixhys"]
+
+[ext_resource type="Script" uid="uid://dlfjdusgpmpe5" path="res://scenes/Application/Player/Player.cs" id="1_1m05i"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_s406k"]
+radius = 0.4
+height = 1.8
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_1m05i")
+Camera3DPath = NodePath("Camera3D")
+RayCastPath = NodePath("Camera3D/RayCast3D")
+speed = 1000.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_s406k")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+
+[node name="RayCast3D" type="RayCast3D" parent="Camera3D"]
+target_position = Vector3(0, 0, -10)

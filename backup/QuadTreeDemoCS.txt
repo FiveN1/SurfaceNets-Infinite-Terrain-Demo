@@ -1,0 +1,105 @@
+using Godot;
+using System;
+using System.Collections.Generic;
+
+public partial class QuadTreeDemo : Node2D
+{
+    List<List<QuadNode>> QuadTree;
+    //List<Panel> Blocks;
+    const int Layers = 4;
+
+    public QuadTreeDemo()
+    {
+        QuadTree = new List<List<QuadNode>>();
+        for (int layer = 0; layer < Layers; layer++)
+        {
+            QuadTree.Add(new List<QuadNode>());
+        }
+
+
+        QuadTree[0].Add(new QuadNode(new(400, 0), new(400, 400)));
+        //QuadTree[0][0].Subdivide(QuadTree[1]);
+    }
+
+    public override void _Ready()
+    {
+        base._Ready();
+    }
+
+    public void UpdatePovPoint(Vector2 PovPoint)
+    {
+        // traversnout celý strom.
+        // branche které pořád existují se nemění
+
+        // (1) loopnout přez celý strom a označit body které by byly stejně vygenerovány. O(N)
+        // -> pokud existuje: označit. pokud neexistuje: vytvořit a označit.
+        // (2) loopnout znovu pžes celý strom (layery) a zjistit rozdíl branchí ve stromu, také je odznačit pro další iterace. O(N)
+        // -> O(2*N) nic moc. pro začátek dobrý.
+
+        // Možná by šlo stáhnout na O(N) pomocí nejakých referencí brachí na další branche v layerech.
+
+
+        for (int layer = 0; layer < Layers - 1; layer++)
+        {
+            for (int LeafIndex = 0; LeafIndex < QuadTree[layer].Count; LeafIndex++)
+            {
+                QuadNode Leaf = QuadTree[layer][LeafIndex];
+
+                Vector2 CellCenterPos = Leaf.Position + Leaf.Size * 0.5f;
+                float dist = (CellCenterPos - PovPoint).Length();
+                bool IsLeaf = true;
+                if (dist < Leaf.Size.X * 1.0f)
+                {
+                    IsLeaf = false;
+                }
+
+
+
+                if (!IsLeaf && Leaf.IsLeaf)
+                {
+                    Leaf.Subdivide(QuadTree[layer + 1]);
+                }
+                if (IsLeaf && !Leaf.IsLeaf)
+                {
+                    // delete branch
+                }
+
+                // zjistit zda leafy existují, pokud ne tak je rozdělit.
+
+                // pro každý leaf zjistit zda by měl být rozdělen
+                // -> pokud ano a není rozdělen tak rozdělit 
+                // -> pokud ano a je rozdělen nic se nemění
+                // -> pokud ne a je rozdělen, smažou se jeho celé kořeny.
+
+            }
+
+
+            // in layer:
+            // > check každý bod zda je v blízkosti
+            // > pokud ano tak rozdělit a přidat do nového layeru.
+            // opakovat
+        }
+    }
+
+    public void GeneratePanels()
+    {
+        for (int layer = 0; layer < Layers; layer++)
+        {
+            for (int LeafIndex = 0; LeafIndex < QuadTree[layer].Count; LeafIndex++)
+            {
+                if (QuadTree[layer][LeafIndex].IsLeaf)
+                {
+                    // generate panel
+                    Panel QuadNodePanel = new Panel();
+                    QuadNodePanel.SetPosition(QuadTree[layer][LeafIndex].Position);
+                    QuadNodePanel.SetSize(QuadTree[layer][LeafIndex].Size);
+                    AddChild(QuadNodePanel);
+                    StyleBoxFlat QuadNodePanelStyle = new StyleBoxFlat();
+                    QuadNodePanelStyle.SetBgColor(new Godot.Color((GD.Randi() % 100) * 0.01f, (GD.Randi() % 100) * 0.01f, (GD.Randi() % 100) * 0.01f, 1));
+                    QuadNodePanel.AddThemeStyleboxOverride("panel", QuadNodePanelStyle);
+                }
+            }
+        }
+    }
+
+}

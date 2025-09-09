@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "rRw2MdRm1WjSyGQf+1smGeIbDq473uBokq9fbwffiLOMWrk74rvzVKSHCvZMvY7IxfVnSGzO1J5oGHMHY5bLrQ==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\tomas\\Documents\\Godot\\Projects\\p1ga\\p1ga.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\tomas\\.nuget\\packages\\godot.sourcegenerators\\4.4.1\\godot.sourcegenerators.4.4.1.nupkg.sha512",
+    "C:\\Users\\tomas\\.nuget\\packages\\godotsharp\\4.4.1\\godotsharp.4.4.1.nupkg.sha512",
+    "C:\\Users\\tomas\\.nuget\\packages\\godotsharpeditor\\4.4.1\\godotsharpeditor.4.4.1.nupkg.sha512"
+  ],
+  "logs": []
+}

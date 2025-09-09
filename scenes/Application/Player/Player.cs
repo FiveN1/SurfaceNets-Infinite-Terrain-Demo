@@ -13,8 +13,8 @@ public partial class Player : CharacterBody3D
     [Export] NodePath RayCastPath;
     RayCast3D RayCast;
 
-    [Export] NodePath terrainPath;
-    Terrain terrain;
+    //[Export] NodePath terrainPath;
+    //WorldSystem.Terrain.WorldTerrain terrain;
 
     //
     // Data
@@ -47,7 +47,7 @@ public partial class Player : CharacterBody3D
         Camera = GetNode<Camera3D>(Camera3DPath);
         RayCast = GetNode<RayCast3D>(RayCastPath);
 
-        terrain = GetNode<Terrain>(terrainPath);
+        //terrain = GetNode< WorldSystem.Terrain.WorldTerrain>(terrainPath);
         //GameTerrain = GetNode<MCTerrain>(TerrainPath);
 
     }
@@ -202,7 +202,7 @@ public partial class Player : CharacterBody3D
         if (Input.IsActionPressed("mouse_left") && RayCast.IsColliding())
         {
             GD.Print("intersecting: ", RayCast.GetCollider(), " at: ", RayCast.GetCollisionPoint());
-            terrain.ModifyTerrain(RayCast.GetCollisionPoint());
+            //terrain.ModifyTerrain(RayCast.GetCollisionPoint());
         }
     }
 

@@ -4,7 +4,7 @@ using System.IO;
 
 
 
-namespace WorldSaveSystem
+namespace WorldSystem
 {
     // oddílný od terrain
     public partial class WorldSave : Node
@@ -18,7 +18,7 @@ namespace WorldSaveSystem
         string headerDirectory;
         string chunkDataDirectory;
 
-        Header header;
+        WorldSaveHeader header;
 
         //
         //
@@ -32,7 +32,7 @@ namespace WorldSaveSystem
             //headerDirectory = Path.Combine(worldDirectory, "header.dat");
             //chunkDataDirectory = Path.Combine(worldDirectory, "chunk_data");
 
-            header = new Header(WorldPosition, worldSize);
+            header = new WorldSaveHeader(WorldPosition, worldSize);
 
             Load(worldDirectory);
         }
@@ -77,37 +77,19 @@ namespace WorldSaveSystem
 
         }
 
-        public void LoadChunk(Terrain22.Chunk chunk, System.Numerics.Vector3 position, float size)
+        public void LoadChunk(ref Terrain.Chunk chunk, System.Numerics.Vector3 position, float size)
         {
-            // ...
-
-            // pokud chunk není největší kvality, tak neukládat.
-
-
-            if (size != Terrain22.Chunk.size)
+                
+            for (int z = 0; z < Terrain.Chunk.fieldSize; z++)
             {
-                // načíst procedural
-                return;
+                for (int x = 0; x < Terrain.Chunk.fieldSize; x++)
+                {
+                    int index = x + 2 * Terrain.Chunk.realFieldSize + z * Terrain.Chunk.realFieldSize * Terrain.Chunk.realFieldSize;
+                    chunk.field[index] = 255;
+                }
             }
 
-            // najít chunk v headeru
-            int chunkIndex = header.FindChunk(position, size);
-            if (chunkIndex == int.MaxValue)
-            {
-                // neexistuje
-                // procedural
-                return;
-            }
-
-
-            // pokud existuje tak načíst
-
-            // pokud ne tak vygenerovat procedural
-            
-            // traversnout strom dokud nenarazíme na požadovaný chunk
-
-
-
+            Godot.GD.Print("loading chunk at: ", position, ", of size: ", size);
         }
 
         public void SaveChunk(Terrain22.Chunk chunk, System.Numerics.Vector3 position, float size) // uloží jeden chunk

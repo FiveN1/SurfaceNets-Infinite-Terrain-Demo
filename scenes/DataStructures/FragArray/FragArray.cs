@@ -29,6 +29,17 @@ namespace DataStructures
             return avalibleIndex;
         }
 
+        public int AddEmpty()
+        {
+            avalibleSize++; // změníme velikost používaných indexů
+            if (avalibleSize > bufferSize) Resize(bufferSize + 8); // pokud je buffer plný tak ho rozšíříme o 16
+            int avalibleIndex = FindAvalibleIndex(); // najdeme volný index
+            if (avalibleIndex == bufferSize) return int.MaxValue; // invalid
+            this.dataBlock[avalibleIndex] = default; // zapíšeme data
+            this.booleanBlock[avalibleIndex] = true; // označíme index jako používaný
+            return avalibleIndex;
+        }
+
         public void Remove(int index)
         {
             //if (index >= this.bufferSize || index < 0) return;

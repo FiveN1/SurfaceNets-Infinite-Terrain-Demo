@@ -7,7 +7,7 @@ using DataStructures;
 using Godot;
 using Godot.Collections;
 
-namespace WorldSaveSystem
+namespace WorldSystem
 {
 
     /* WorldSaveSystem - Header
@@ -18,12 +18,12 @@ namespace WorldSaveSystem
     * celej header načtenej najednou?
     *
     */
-    public class Header
+    public class WorldSaveHeader
     {
         // pool
         public DataStructures.Octree<int> octree;
 
-        public Header(System.Numerics.Vector3 worldPosition, float worldSize)
+        public WorldSaveHeader(System.Numerics.Vector3 worldPosition, float worldSize)
         {
             octree = new DataStructures.Octree<int>(worldPosition, worldSize);
         }

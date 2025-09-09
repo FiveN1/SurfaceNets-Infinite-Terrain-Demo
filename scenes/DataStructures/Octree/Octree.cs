@@ -85,7 +85,6 @@ namespace DataStructures
             }
             // teď už není listem
             octants.Get(OctantIndex).isLeaf = false;
-
         }
 
         public void UnSubdivideOctant(int OctantIndex)

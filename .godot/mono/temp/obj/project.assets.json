@@ -94,11 +94,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\tomas\\Documents\\Godot\\Projects\\p1ga\\p1ga.csproj",
+      "projectUniqueName": "C:\\Users\\tomas\\Documents\\Godot\\Projects\\p1ga\\ProjectPulse\\p1ga.csproj",
       "projectName": "p1ga",
-      "projectPath": "C:\\Users\\tomas\\Documents\\Godot\\Projects\\p1ga\\p1ga.csproj",
+      "projectPath": "C:\\Users\\tomas\\Documents\\Godot\\Projects\\p1ga\\ProjectPulse\\p1ga.csproj",
       "packagesPath": "C:\\Users\\tomas\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\tomas\\Documents\\Godot\\Projects\\p1ga\\.godot\\mono\\temp\\obj\\",
+      "outputPath": "C:\\Users\\tomas\\Documents\\Godot\\Projects\\p1ga\\ProjectPulse\\.godot\\mono\\temp\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

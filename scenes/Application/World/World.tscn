@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://bignlsd8ojhlq"]
+
+[ext_resource type="Script" uid="uid://van5fxqjinka" path="res://scenes/Application/World/World.cs" id="1_er5em"]
+
+[node name="World" type="Node"]
+script = ExtResource("1_er5em")
+meshNodePath = NodePath("Meshes")
+
+[node name="Meshes" type="Node3D" parent="."]

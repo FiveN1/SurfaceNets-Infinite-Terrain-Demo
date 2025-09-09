@@ -1,10 +1,9 @@
-[gd_scene load_steps=19 format=3 uid="uid://c5pd7m4pxc4r2"]
+[gd_scene load_steps=18 format=3 uid="uid://c5pd7m4pxc4r2"]
 
 [ext_resource type="Script" uid="uid://drx5a6n1hh58v" path="res://scenes/Application/Application.cs" id="1_lmbyv"]
 [ext_resource type="PackedScene" uid="uid://d30nm8h5ixhys" path="res://scenes/Application/Player/Player.tscn" id="2_puocm"]
-[ext_resource type="Shader" uid="uid://diuuygs121kca" path="res://scenes/Application/Terrain/Octree/Node/Debug/NodeDebugShader.gdshader" id="3_puocm"]
-[ext_resource type="Script" uid="uid://van5fxqjinka" path="res://scenes/Application/World/World.cs" id="6_00nah"]
-[ext_resource type="PackedScene" uid="uid://kdanuhwvoedi" path="res://scenes/Application/Terrain/Terrain.tscn" id="6_jfhc7"]
+[ext_resource type="Shader" uid="uid://diuuygs121kca" path="res://scenes/Application/World/WorldTerrain/Chunk/Shader/NodeDebugShader.gdshader" id="3_puocm"]
+[ext_resource type="PackedScene" uid="uid://bignlsd8ojhlq" path="res://scenes/Application/World/World.tscn" id="6_00nah"]
 [ext_resource type="Script" uid="uid://c28nqd2etyppg" path="res://scenes/Application/UI/Ui.cs" id="6_lmbyv"]
 [ext_resource type="Texture2D" uid="uid://cnkb3rn7lwm5p" path="res://assets/cursor2.png" id="7_g24vp"]
 [ext_resource type="PackedScene" uid="uid://r5187ga282u8" path="res://scenes/Application/Terrain/WorldGenerator/WorldGenerator.tscn" id="8_bibs7"]
@@ -51,11 +50,12 @@ font_size = 32
 [node name="Application" type="Node"]
 script = ExtResource("1_lmbyv")
 
+[node name="World" parent="." instance=ExtResource("6_00nah")]
+
 [node name="3D" type="Node3D" parent="."]
 
 [node name="Player" parent="3D" instance=ExtResource("2_puocm")]
 transform = Transform3D(-0.62932, 0, -0.777146, 0, 1, 0, 0.777146, 0, -0.62932, 0, 0, 0)
-terrainPath = NodePath("../Terrain")
 speed = 2000.0
 
 [node name="mesh1" type="MeshInstance3D" parent="3D"]
@@ -89,18 +89,10 @@ mesh = SubResource("PlaneMesh_1i0c2")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="3D/Floor/StaticBody3D"]
 shape = SubResource("ConcavePolygonShape3D_1i0c2")
 
-[node name="Terrain" parent="3D" instance=ExtResource("6_jfhc7")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -300, 0)
-PlayerPath = NodePath("../Player")
-WorldGeneratorPath = NodePath("../WorldGenerator")
-
 [node name="WorldGenerator" parent="3D" instance=ExtResource("8_bibs7")]
 Noise3 = SubResource("FastNoiseLite_00nah")
 Noise3Intensity = 16.0
 TerrainBaseHeight = 1.0
-
-[node name="World" type="Node" parent="3D"]
-script = ExtResource("6_00nah")
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 3

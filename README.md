@@ -21,7 +21,7 @@ Implemented.
 A pretty complex system wich stores every modified chunk of the world in one file and keeps track of them trough an octree data structure stored in the header file.
 
 > [!WARNING]
-> This system is under developement, and is not optimized!
+> This system is not optimized!
 
 [Check it out here!](scenes/Application/World/WorldSave)
 

@@ -2,8 +2,10 @@ using Godot;
 
 namespace WorldSystem
 {
-    // Svět
+    // ## Svět
     //
+    // obsahuje terrén
+    // je rozdělen do chunků podle LOD. kde největší LOD je v místě kde se nachází hráč/kamera.
     public partial class World : Node
     {
 
@@ -17,7 +19,7 @@ namespace WorldSystem
 
         public World()
         {
-
+            GD.Print("World constructor");
         }
 
         public override void _Ready()
@@ -36,20 +38,8 @@ namespace WorldSystem
             int worldSeed = 8;
             worldSave = new Save.WorldSave(worldTerrain.worldPosition, worldTerrain.worldSize, worldName, worldSeed);
 
+            // pro začátek nastavíme LOD na prostředku světa.
             UpdatePov(new(0.0f, 0.0f, 0.0f));
-
-
-            int size = 8;
-            for (int y = 0; y < size; y++)
-            {
-                string row = "";
-                for (int x = 0; x < size; x++)
-                {
-                    row += Terrain.Chunk.GetFieldIndex2(x, y).ToString() + ", ";
-                }
-                GD.Print(row);
-            }
-
         }
 
         // vygeneruje world octree strukturu podle toho kde se pov pozice nachází.
@@ -72,11 +62,7 @@ namespace WorldSystem
 
 }
 
-
-// čistý kod!!
-// když je někde duplikát funkce, většinou to lze zobecnit nebo udělat override.
-
-/*
+/* Změny
 *
 *
 * ... úplně přepsáno.

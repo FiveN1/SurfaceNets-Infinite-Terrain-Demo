@@ -1,6 +1,12 @@
 
 namespace DataStructures
 {
+    // # Fragmented Array
+    //
+    // Pole s "mezerami". to znamená že toto pole nemusí držet elementy těsně vedle sebe v bufferu ale mohou mezi nimi být mezery.
+    // tímto se dosáhne rychlého přidávání/odebírání elementů a také stejného indexu emenentu v poli.
+    // jediná nevýhoda které tu může vzniknout je pak pomalejší hledání volného místa v poli jelikož to je O(n) kde n je velikost bufferu.
+    //
     public class FragArray<T>
     {
         // POZNÁMKA: všechny blocky mají stejnou velikost

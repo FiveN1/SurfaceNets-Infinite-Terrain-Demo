@@ -1,9 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://dish60vu0rye3"]
-
-[ext_resource type="Script" uid="uid://c84sjrediygy8" path="res://scenes/QuadTreeDemo/QuadTreeDemo.cs" id="1_wxko2"]
-
-[node name="QuadTreeDemo" type="Node2D"]
-script = ExtResource("1_wxko2")
-PanelNodePath = NodePath("Panels")
-
-[node name="Panels" type="Node2D" parent="."]

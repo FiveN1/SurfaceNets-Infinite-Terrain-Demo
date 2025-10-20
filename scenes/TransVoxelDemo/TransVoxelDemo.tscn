@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://dmn7yslq3d7f7"]
-
-[ext_resource type="Script" uid="uid://drxn3h7qtqb2h" path="res://scenes/TransVoxelDemo/TransVoxelDemo.cs" id="1_bpxa2"]
-
-[node name="TransVoxelDemo" type="Node3D"]
-script = ExtResource("1_bpxa2")

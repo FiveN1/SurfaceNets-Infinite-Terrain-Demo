@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SurfaceNets-Infinite-Terrain-Demo")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+64d8b112cb137934233f02de30816b3ccfdf8cba")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+be0acf8f280f8690396e6442cfc9bf7141d9d62a")]
 [assembly: System.Reflection.AssemblyProductAttribute("SurfaceNets-Infinite-Terrain-Demo")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SurfaceNets-Infinite-Terrain-Demo")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

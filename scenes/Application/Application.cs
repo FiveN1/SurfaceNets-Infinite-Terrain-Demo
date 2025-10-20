@@ -138,34 +138,8 @@ public partial class Application : Node
 {
     public Application()
     {
+        // povolíme wireframe
         RenderingServer.SetDebugGenerateWireframes(true);
-
-        /*
-        DataStructures.FragArray<int> fragArr1 = new DataStructures.FragArray<int>();
-        int id1 = fragArr1.Add(165);
-        GD.Print("added at: ", id1, " value: ", fragArr1.Get(id1));
-        int id2 = fragArr1.Add(8);
-        ref int dd = ref fragArr1.Get(id2);
-        dd = 89;
-        GD.Print("added at: ", id2, " value: ", fragArr1.Get(id2));
-        fragArr1.Remove(id1);
-        int id3 = fragArr1.Add(206);
-        GD.Print("added at: ", id3, " value: ", fragArr1.Get(id3));
-        */
-
-
-        DataStructures.Octree<int> octree = new DataStructures.Octree<int>(new(0.0f, 0.0f, 0.0f), 2.0f);
-        octree.SubdivideOctant(0);
-        //octree.UnSubdivideOctant(0);
-        //octree.SubdivideOctant(1);
-        DataStructures.Octant<int> oct1 = octree.GetRoot();
-        GD.Print("root: ", oct1);
-
-        int neighborID = octree.FindOctantNeighbor(2, new System.Numerics.Vector3(-1, 0, 0));
-        GD.Print("neighborID: ", neighborID);
-
-        //GD.Print("1: ", octree.GetOctant(1));
-
 
     }
 }

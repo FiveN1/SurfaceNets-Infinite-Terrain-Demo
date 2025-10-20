@@ -2,7 +2,7 @@
 
 namespace DataStructures
 {
-    // velmi podobné jako frag array
+    // vlastní implementace poolu. (na základě frag array)
     public class Pool<T>
     {
         // POZNÁMKA: všechny blocky mají stejnou velikost

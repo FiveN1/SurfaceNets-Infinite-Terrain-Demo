@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="ProjectPulse"
+config/name="SurfaceNets-Infinite-Terrain-Demo"
 config/version="03072025"
 run/main_scene="uid://c5pd7m4pxc4r2"
 config/features=PackedStringArray("4.4", "C#", "Forward Plus")
@@ -27,7 +27,7 @@ window/size/mode=2
 
 [dotnet]
 
-project/assembly_name="p1ga"
+project/assembly_name="SurfaceNets-Infinite-Terrain-Demo"
 
 [input]
 

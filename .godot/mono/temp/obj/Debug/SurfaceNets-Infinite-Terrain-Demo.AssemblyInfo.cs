@@ -10,12 +10,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("p1ga")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("SurfaceNets-Infinite-Terrain-Demo")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+64d8b112cb137934233f02de30816b3ccfdf8cba")]
-[assembly: System.Reflection.AssemblyProductAttribute("p1ga")]
-[assembly: System.Reflection.AssemblyTitleAttribute("p1ga")]
+[assembly: System.Reflection.AssemblyProductAttribute("SurfaceNets-Infinite-Terrain-Demo")]
+[assembly: System.Reflection.AssemblyTitleAttribute("SurfaceNets-Infinite-Terrain-Demo")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 
 // Vygenerované třídou WriteCodeFragment nástroje MSBuild

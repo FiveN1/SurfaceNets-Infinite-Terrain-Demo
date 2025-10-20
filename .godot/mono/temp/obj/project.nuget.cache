@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "07qL37lzaF5W8htTAB+wTpL0N2fajV3NGpO381GIS0iYNB43M+z2je0go4q+QmkmeLokM0fSI1b6n5ocPxJ+5Q==",
+  "dgSpecHash": "JABpngqF8ZUshM17vTCewvk8JAHr5DWmGPulsmyilAnfbE5T69vYSED8xPOotR8qTNjlhckB5goTRDnd9Vx7pQ==",
   "success": true,
-  "projectFilePath": "C:\\Godot\\SurfaceNets-Infinite-Terrain-Demo\\SurfaceNets-Infinite-Terrain-Demo\\p1ga.csproj",
+  "projectFilePath": "C:\\Godot\\SurfaceNets-Infinite-Terrain-Demo\\SurfaceNets-Infinite-Terrain-Demo\\SurfaceNets-Infinite-Terrain-Demo.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\tomas\\.nuget\\packages\\godot.sourcegenerators\\4.4.1\\godot.sourcegenerators.4.4.1.nupkg.sha512",
     "C:\\Users\\tomas\\.nuget\\packages\\godotsharp\\4.4.1\\godotsharp.4.4.1.nupkg.sha512",

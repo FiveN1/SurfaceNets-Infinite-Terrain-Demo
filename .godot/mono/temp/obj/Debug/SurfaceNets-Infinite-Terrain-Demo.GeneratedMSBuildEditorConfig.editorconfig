@@ -1,6 +1,6 @@
 is_global = true
 build_property.GodotDisabledSourceGenerators = 
-build_property.GodotProjectDir = c:\Godot\SurfaceNets-Infinite-Terrain-Demo\SurfaceNets-Infinite-Terrain-Demo\
+build_property.GodotProjectDir = C:\Godot\SurfaceNets-Infinite-Terrain-Demo\SurfaceNets-Infinite-Terrain-Demo\
 build_property.GodotProjectDirBase64 = 
 build_property.GodotSourceGenerators = 
 build_property.IsGodotToolsProject = 
@@ -12,7 +12,7 @@ build_property.InvariantGlobalization =
 build_property.PlatformNeutralAssembly = 
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
-build_property.RootNamespace = p1ga
-build_property.ProjectDir = c:\Godot\SurfaceNets-Infinite-Terrain-Demo\SurfaceNets-Infinite-Terrain-Demo\
+build_property.RootNamespace = SurfaceNets-Infinite-Terrain-Demo
+build_property.ProjectDir = C:\Godot\SurfaceNets-Infinite-Terrain-Demo\SurfaceNets-Infinite-Terrain-Demo\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 

@@ -94,9 +94,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Godot\\SurfaceNets-Infinite-Terrain-Demo\\SurfaceNets-Infinite-Terrain-Demo\\p1ga.csproj",
-      "projectName": "p1ga",
-      "projectPath": "C:\\Godot\\SurfaceNets-Infinite-Terrain-Demo\\SurfaceNets-Infinite-Terrain-Demo\\p1ga.csproj",
+      "projectUniqueName": "C:\\Godot\\SurfaceNets-Infinite-Terrain-Demo\\SurfaceNets-Infinite-Terrain-Demo\\SurfaceNets-Infinite-Terrain-Demo.csproj",
+      "projectName": "SurfaceNets-Infinite-Terrain-Demo",
+      "projectPath": "C:\\Godot\\SurfaceNets-Infinite-Terrain-Demo\\SurfaceNets-Infinite-Terrain-Demo\\SurfaceNets-Infinite-Terrain-Demo.csproj",
       "packagesPath": "C:\\Users\\tomas\\.nuget\\packages\\",
       "outputPath": "C:\\Godot\\SurfaceNets-Infinite-Terrain-Demo\\SurfaceNets-Infinite-Terrain-Demo\\.godot\\mono\\temp\\obj\\",
       "projectStyle": "PackageReference",

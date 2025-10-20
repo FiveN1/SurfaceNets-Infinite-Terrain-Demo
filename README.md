@@ -1,15 +1,19 @@
 # SurfaceNets infinite terrain demo
-Using Godot 4.4.1 C#
+Using the Godot Engine v4.4.1 C#
 
 > [!WARNING]
 > This demo is still indev.
 > Will lack some features
 
+This demo shows puts you in a world that is fully destructable and rendered in its entierity before your very eyes.
+The world is made out of voxels that are converted into meshes.
+
+
 ## Features
 ### SurfaceNets meshing ✅
 Implemented.
 Features the SurfaceNets algorithm wich creates a mesh from a unsigned byte field.
-I chose the SurfaceNets method over MarchingCubes because it is faster, simplier and most importantly easier to stich with neighboring chunks of diffrent sizes.
+I chose the SurfaceNets method over MarchingCubes because it is faster (it can be calculated on the GPU), simplier and most importantly easier to stich with neighboring chunks of diffrent sizes.
 
 [Check it out here!](scenes/Application/World/WorldTerrain/Chunk/SurfaceNets)
 

@@ -1,4 +1,4 @@
-# SurfaceNets infinite terrain demo
+# SurfaceNets Infinite Terrain Demo
 Using the Godot Engine v4.4.1 C#
 
 This demo shows puts you in a world that is fully destructable and rendered in its entierity before your very eyes.

@@ -1,5 +1,5 @@
 # SurfaceNets infinite terrain demo
-Using Godot 4.4 C#
+Using Godot 4.4.1 C#
 
 ## Origin
 This was originally supposed to be a game but i got overwhelmed by its scope.

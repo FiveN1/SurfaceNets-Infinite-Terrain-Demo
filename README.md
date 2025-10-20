@@ -1,5 +1,15 @@
 # SurfaceNets infinite terrain demo
-Using Godot 4.4 C#
+Using Godot 4.4.1 C#
+
+> [!WARNING]
+> This demo is still indev.
+> Will lack some features
+
+## Features
+- SurfaceNets meshing - implemented
+- Octree LOD system - implemented
+- Chunk save system - implemented
+- Chunk Stich system - not implemented
 
 ## Origin
 This was originally supposed to be a game but i got overwhelmed by its scope.

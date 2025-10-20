@@ -1,13 +1,14 @@
 # SurfaceNets infinite terrain demo
 Using the Godot Engine v4.4.1 C#
 
-> [!WARNING]
-> This demo is still indev.
-> Will lack some features
-
 This demo shows puts you in a world that is fully destructable and rendered in its entierity before your very eyes.
 The world is made out of voxels that are converted into meshes.
 
+<img style="float: right;" src="https://github.com/FiveN1/SurfaceNets-Infinite-Terrain-Demo/blob/main/assets/repo/screenshot1.png" alt="Nymphaea 3D screenshot" width="512"/>
+
+> [!WARNING]
+> This demo is still indev.
+> Will lack some features
 
 ## Features
 ### SurfaceNets meshing ✅

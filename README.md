@@ -6,10 +6,21 @@ Using Godot 4.4.1 C#
 > Will lack some features
 
 ## Features
-- SurfaceNets meshing - implemented
-- Octree LOD system - implemented
-- Chunk save system - implemented
-- Chunk Stich system - not implemented
+### SurfaceNets meshing ✅
+Implemented.
+Features the SurfaceNets algorithm wich creates a mesh from a unsigned byte field.
+I chose the SurfaceNets method over MarchingCubes because it is faster, simplier and most importantly easier to stich with neighboring chunks of diffrent sizes.
+
+[Check it out here!](scenes/Application/World/WorldTerrain/Chunk/SurfaceNets)
+
+### Octree LOD system ✅
+Implemented
+
+### Chunk save system ✅
+Implemented
+
+### Chunk Stich system❌
+*Not yet implemented*
 
 ## Origin
 This was originally supposed to be a game but i got overwhelmed by its scope.

@@ -1,9 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://kdanuhwvoedi"]
-
-[ext_resource type="Script" uid="uid://c0a83u5nxq8dc" path="res://scenes/Application/World/WorldTerrain/WorldTerrain.cs" id="1_hnxn0"]
-
-[node name="Terrain" type="Node3D"]
-script = ExtResource("1_hnxn0")
-meshesPath = NodePath("Meshes")
-
-[node name="Meshes" type="Node3D" parent="."]

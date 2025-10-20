@@ -37,7 +37,7 @@ namespace WorldSystem.Terrain
         public WorldTerrain(Node3D meshNode)
         {
             // výpočet rozměrů světa podle worldScale
-            worldSize = Mathf.Pow(2, worldScale) * Terrain22.Chunk.size;
+            worldSize = Mathf.Pow(2, worldScale) * Chunk.fieldSize;
             worldPosition = new System.Numerics.Vector3(-worldSize / 2.0f);
 
             // init struktur

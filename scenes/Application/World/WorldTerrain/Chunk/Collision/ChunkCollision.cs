@@ -1,5 +1,4 @@
 using Godot;
-using SurfaceNet;
 
 namespace WorldSystem.Terrain
 {
@@ -21,7 +20,7 @@ namespace WorldSystem.Terrain
         }
 
         // JDE OPTIMALIZOVAT NA GPU !!
-        public void Generate(Vector3 nodePosition, float nodeSize, MeshData meshData)
+        public void Generate(Vector3 nodePosition, float nodeSize, SurfaceNet.MeshData meshData)
         {
             int arrayLength = meshData.indicesSize; //this.meshData.indices.Length;
             Vector3[] verticesForCollision = new Vector3[arrayLength]; // zbytečně dlouhý !!

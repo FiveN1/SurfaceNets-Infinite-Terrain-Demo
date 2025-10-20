@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://c5pd7m4pxc4r2"]
+[gd_scene load_steps=18 format=3 uid="uid://c5pd7m4pxc4r2"]
 
 [ext_resource type="Script" uid="uid://drx5a6n1hh58v" path="res://scenes/Application/Application.cs" id="1_lmbyv"]
 [ext_resource type="PackedScene" uid="uid://d30nm8h5ixhys" path="res://scenes/Application/Player/Player.tscn" id="2_puocm"]
@@ -8,7 +8,6 @@
 [ext_resource type="FontFile" uid="uid://cdaprce6flhq8" path="res://assets/font/ProggyClean/ProggyClean.ttf" id="6_jfhc7"]
 [ext_resource type="Script" uid="uid://c28nqd2etyppg" path="res://scenes/Application/UI/Ui.cs" id="6_lmbyv"]
 [ext_resource type="Texture2D" uid="uid://cnkb3rn7lwm5p" path="res://assets/cursor2.png" id="7_g24vp"]
-[ext_resource type="PackedScene" uid="uid://r5187ga282u8" path="res://scenes/Application/Terrain/WorldGenerator/WorldGenerator.tscn" id="8_bibs7"]
 [ext_resource type="PackedScene" uid="uid://dmn7yslq3d7f7" path="res://scenes/TransVoxelDemo/TransVoxelDemo.tscn" id="11_puocm"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_4llxv"]
@@ -40,9 +39,6 @@ size = Vector2(5, 5)
 
 [sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_1i0c2"]
 data = PackedVector3Array(2.5, 0, 2.5, -2.5, 0, 2.5, 2.5, 0, -2.5, -2.5, 0, 2.5, -2.5, 0, -2.5, 2.5, 0, -2.5)
-
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_00nah"]
-frequency = 0.0264
 
 [sub_resource type="LabelSettings" id="LabelSettings_1i0c2"]
 font_size = 32
@@ -89,11 +85,6 @@ mesh = SubResource("PlaneMesh_1i0c2")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="3D/Floor/StaticBody3D"]
 shape = SubResource("ConcavePolygonShape3D_1i0c2")
-
-[node name="WorldGenerator" parent="3D" instance=ExtResource("8_bibs7")]
-Noise3 = SubResource("FastNoiseLite_00nah")
-Noise3Intensity = 16.0
-TerrainBaseHeight = 1.0
 
 [node name="Label3D" type="Label3D" parent="3D"]
 billboard = 1

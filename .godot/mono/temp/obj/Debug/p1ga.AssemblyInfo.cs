@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("p1ga")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b245247877bf6015a739ae33bfc3f408c0e89f8e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+df917f8b87f68c9e384b707ea474c2163eedb691")]
 [assembly: System.Reflection.AssemblyProductAttribute("p1ga")]
 [assembly: System.Reflection.AssemblyTitleAttribute("p1ga")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

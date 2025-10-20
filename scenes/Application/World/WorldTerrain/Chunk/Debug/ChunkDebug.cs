@@ -13,6 +13,8 @@ namespace WorldSystem.Terrain
         ShaderMaterial debugMaterial;
         Color debugColor;
 
+        Label3D debugText;
+
         // constructor
         public ChunkDebug(ChunkDebugContext chunkDebugContext)
         {
@@ -27,6 +29,15 @@ namespace WorldSystem.Terrain
             this.debugMaterial = new ShaderMaterial();
             debugMaterial.Shader = this.context.debugMaterialShader;
             debugMaterial.SetShaderParameter("color", this.debugColor);
+            // text
+            debugText = new Label3D();
+            debugText.Font = context.debugFont;
+            debugText.Text = "no chunk data saved";
+            debugText.FontSize = 64;
+            debugText.TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest;
+            debugText.Billboard = BaseMaterial3D.BillboardModeEnum.Enabled;
+            this.context.debugMeshNode.AddChild(debugText);
+            debugText.Visible = context.enabled;
         }
 
         public void Set(Vector3 position, float size)
@@ -39,6 +50,13 @@ namespace WorldSystem.Terrain
             this.debugBox.Scale = new Vector3(size, size, size);
             // material
             this.debugBox.SetSurfaceOverrideMaterial(0, debugMaterial);
+            // text
+            debugText.Visible = context.enabled;
+            debugText.Position = position + new Vector3(size, size, size) * 0.5f;
+            debugText.Scale = new Vector3(size, size, size) / Terrain.Chunk.fieldSize;
+
+            float f = Terrain.Chunk.fieldSize * 4.0f / size;
+            SetColor(new Color(f, 0.0f, 1.0f - f));
         }
 
         public void SetColor(Color color)
@@ -103,6 +121,17 @@ namespace WorldSystem.Terrain
 
             arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Lines, arrays); // POMALE! (z nějakého důvodu velmi pomalé)
             return arrayMesh;
+        }
+
+        public void Enabled(bool enabled)
+        {
+            debugBox.Visible = enabled;
+            debugText.Visible = enabled;
+        }
+
+        public void SetText(string text)
+        {
+            debugText.Text = text;
         }
 
     }

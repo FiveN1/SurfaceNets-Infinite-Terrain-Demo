@@ -1,5 +1,14 @@
+using DataStructures;
 using Godot;
 using System;
+
+/*
+* Napad pro optimalizaci:
+*
+* - při modifikaci několika chunků, poslat všechny chunky na gpu najednou.
+*
+*/
+
 
 // Renderovaný terén z worldSave
 // 
@@ -8,19 +17,21 @@ using System;
 //
 namespace WorldSystem.Terrain
 {
+    // spojuje chunky a octree dohromady
     public class WorldTerrain
     {
         //
-        public const int worldScale = 2;
+        public const int worldScale = 3;
+        public const float renderDistanceScale = 1.2f; // LOD scale, podle toho se určuje vzdálenost kvalitních chunků. (1.0f, je default) (může jít od 0.1f, do +inf, víc než 2.0f není potřeba)
         public readonly float worldSize;
         public readonly System.Numerics.Vector3 worldPosition;
 
         // chunk octree
-        private DataStructures.Octree<int> octree;
-        private DataStructures.FragArray<Chunk> chunks;
+        public DataStructures.Octree<int> octree;
+        public DataStructures.Pool<Chunk> chunkPool;
 
         // chunk context
-        private ChunkContext chunkContext;
+        public ChunkContext chunkContext;
 
         // constructor
         public WorldTerrain(Node3D meshNode)
@@ -31,24 +42,41 @@ namespace WorldSystem.Terrain
 
             // init struktur
             octree = new DataStructures.Octree<int>(worldPosition, worldSize);
-            chunks = new DataStructures.FragArray<Chunk>();
+            octree.GetOctant(octree.rootIndex).value = int.MaxValue; // set root default
+            chunkPool = new DataStructures.Pool<Chunk>();
 
             // chunk context
+            // ZBAVIT SE !!
             chunkContext = new ChunkContext(meshNode);
             chunkContext.DebugEnabled(true);
         }
 
 
-        public void Update(System.Numerics.Vector3 povPosition, WorldSave worldsave)
+        public void UpdatePov(System.Numerics.Vector3 povPosition, Save.WorldSave worldsave)
         {
             SubdivideIfClose(octree.rootIndex, povPosition, 0, worldScale, worldsave);
         }
 
         //
-        //
+        // subdivide
         //
 
-        private void SubdivideIfClose(int octantIndex, System.Numerics.Vector3 position, int iterationCount, int maxIterations, WorldSave worldSave) // max iterations
+        // PROBLÉMY:
+        // 1. tvorba zbytečných chunků.
+        // - podle toho z jakého směru jde update se uvolnují a pak přidávají chunky.
+        // - je možné že se některé chunky vytvoří dřív než se uvolní zbytek,
+        // poté tedy vznikne nadbytek chunků které se nikdy nevyužijí.
+        // ŘEŠENÍ:
+        // - Odstranit nejdříve chunky, potom přidat.
+        //
+        // 2. není tu maximální limit chunků.
+        // - bylo by dobré kdyby nejaké uplně vzdálené chunky nebyly tvořeny.
+        // - poté by yblo možné mít opravdu nekonečný svět, bez toho aby počet chunků rostl.
+        // ŘEŠENÍ:
+        // - nejdříve se tvoří chunky nejblíže k pov point, poté více vzdálené.
+        // počítal by se také počet chunků ve stromě, pokud by dosáhl limitu tak by se iterace zastavila.
+        //
+        private void SubdivideIfClose(int octantIndex, System.Numerics.Vector3 position, int iterationCount, int maxIterations, Save.WorldSave worldSave) // max iterations
         {
             ref DataStructures.Octant<int> octant = ref octree.GetOctant(octantIndex);
             //
@@ -58,7 +86,8 @@ namespace WorldSystem.Terrain
             // pokud byla dosažena maximální iterace tak pouze nastavíme jeho panel
             if (iterationCount > maxIterations)
             {
-                AssignChunk(ref octant, worldSave);
+                //GD.Print("assign1");
+                AssignChunk(octantIndex, worldSave);
                 // add chunk pro octant
                 return;
             }
@@ -73,16 +102,18 @@ namespace WorldSystem.Terrain
             // pokud by měl být orzdělen ale není (je blízko), rozdělíme ho.
             if (isClose && octant.isLeaf)
             {
-                octree.SubdivideOctant(octantIndex);
+                //GD.Print("sub");
+                octree.SubdivideOctant(octantIndex, int.MaxValue);
+                UnAssignChunk(octantIndex, worldSave);
                 // jelikož se možná změnila adresa tak ho musíme znovu získat
                 octant = ref octree.GetOctant(octantIndex);
                 // potom se bude iterovat nad jeho listy...
-                //activeNode.Subdivide();
             }
             // pokud by neměl být rozdělen ale je (není blízko), přemeníme ho na list
             if (!isClose && !octant.isLeaf)
             {
-                octree.UnSubdivideOctant(octantIndex);
+                //GD.Print("unsub");
+                UnsubdivideOctantAndRemoveChunk(octantIndex, worldSave);
                 //activeNode.Unsubdivide();
             }
             //
@@ -91,9 +122,11 @@ namespace WorldSystem.Terrain
             // pokud je po operaci listem, přidáme mu panel.
             if (octant.isLeaf)
             {
-                AssignChunk(ref octant, worldSave);
+                //GD.Print("assign2");
+                AssignChunk(octantIndex, worldSave);
                 return;
             }
+            //GD.Print("cont");
             // pokud není po operaci listem, iterujem nad jeho listy
             // POZNÁMKA: iterujem od (+)konce aby bylo možné vytvořit spoje mezi chunky a nemuseli jsem iterovat znovu přes celý strom.
             for (int i = 7; i >= 0; i--)
@@ -102,47 +135,254 @@ namespace WorldSystem.Terrain
             }
         }
 
+        // přesunout do octree?
         private bool CheckIfNodeClose(DataStructures.Octant<int> octant, System.Numerics.Vector3 position)
         {
-            float renderDistanceScale = 1.0f;
-
             System.Numerics.Vector3 CellCenterPos = octant.position + new System.Numerics.Vector3(octant.size) * 0.5f;
             float dist = (CellCenterPos - position).Length();
             if (dist < octant.size * renderDistanceScale) return true;
             return false;
         }
 
+        //
+        // chunk fetch
+        //
+
         private int FetchChunk()
         {
-            int chunkIndex = chunks.AddEmpty();
-            ref Chunk chunk = ref chunks.Get(chunkIndex);
+            int chunkIndex = chunkPool.Fetch();
+            ref Chunk chunk = ref chunkPool.Get(chunkIndex);
             // pokud je chunk fresh (nebyl předtím použit) tak ho inicializujem
-            if (chunk.Equals(default(WorldSystem.Terrain.Chunk)))
+
+            if (!chunkPool.CheckIfConstructed(chunkIndex))
             {
                 chunk = new(chunkContext);
+                chunkPool.SetAcConstructed(chunkIndex);
+                GD.Print("new chunk ", chunkIndex);
             }
+            chunk.Enabled(true);
             return chunkIndex;
         }
 
-        private void AssignChunk(ref DataStructures.Octant<int> octant, WorldSave worldSave)
+        //
+        // chunk
+        //
+
+        private void AssignChunk(int octantIndex, Save.WorldSave worldSave)
         {
+            ref DataStructures.Octant<int> octant = ref octree.octants.Get(octantIndex);
+
+            // pokud je chunk není prázdný tak se nic neděje.
+            if (octant.value != int.MaxValue) return;
+            //
             int chunkIndex = FetchChunk();
-            ref Chunk chunk = ref chunks.Get(chunkIndex);
+            if (chunkIndex == int.MaxValue)
+            {
+                GD.PrintErr("invalid chunk!");
+                return;
+            }
+            ref Chunk chunk = ref chunkPool.Get(chunkIndex);
+            // assign chunk to octant
+            octant.value = chunkIndex;
+
+
+
             // načteme hodnoty chunku
             // * také získat neighbor hodnoty !
             worldSave.LoadChunk(ref chunk, octant.position, octant.size);
+            //worldSave.worldGen.GenerateChunk(ref chunk, octant.position, octant.size);
             // vytvoříme mesh
+            //GetChunkEdgeValues(octantIndex);
             chunk.Create(octant.position, octant.size);
-            // assign chunk to octant
-            octant.value = chunkIndex;
+
+            //GD.Print("assigned chunk: ", octant.value);
+        }
+        private void UnAssignChunk(int octantIndex, Save.WorldSave worldSave)
+        {
+            ref DataStructures.Octant<int> octant = ref octree.octants.Get(octantIndex);
+            int chunkIndex = octant.value;
+            if (chunkIndex == int.MaxValue) return;
+            // get chunk
+            ref Chunk chunk = ref chunkPool.Get(chunkIndex);
+            // save
+            worldSave.SaveChunk(ref chunk, octant.position, octant.size);
+            // free
+            chunk.Enabled(false);
+            chunkPool.Free(chunkIndex);
+            octant.value = int.MaxValue;
+        }
+
+        //
+        // Octant subdivide
+        //
+
+
+        private void UnsubdivideOctantAndRemoveChunk(int octantIndex, Save.WorldSave worldSave)
+        {
+            //GD.Print("unsubdividing octant: ", octantIndex);
+            ref DataStructures.Octant<int> octant = ref octree.octants.Get(octantIndex);
+            // check zda nebyl subduvudován
+            if (octant.isLeaf) return;
+            // pro každý list -> unsubdivide dokud nenarazíme na dno
+            // potom můžeme smazat když jsou všechny listy pryč
+            for (int LeafIndex = 0; LeafIndex < 8; LeafIndex++)
+            {
+                UnsubdivideOctantAndRemoveChunk(octant.leafs[LeafIndex], worldSave);
+                // pokud má chunk tak ho odeberem a vrátíme zpátky do poolu
+                UnAssignChunk(octant.leafs[LeafIndex], worldSave);
+                // pak ho odstraníme
+                octree.octants.Remove(octant.leafs[LeafIndex]);
+            }
+            // teď je list
+            octant.isLeaf = true;
         }
 
 
+        // dodělat chunk update.
+        // PROBLÉM:
+        // - nelze modifikovat chunk který má nižší lod
+        public void ModifyTerrain(System.Numerics.Vector3 collisionPoint, bool extrude, Save.WorldSave worldSave)
+        {
+
+            int brushSize = 3;
+            byte brushAmount = 4;
+
+            // pole s všemi octanty ve kterých se změnili hodnoty chunku
+            // * je nahovno že se tento array pořád allokuje (25.09.2025)
+            System.Collections.Generic.List<int> modifiedOctants = new System.Collections.Generic.List<int>();
+
+            // loop přez všechny hodnoty fieldů chunků
+            for (int z = 0; z <= brushSize; z++)
+            {
+                for (int y = 0; y <= brushSize; y++)
+                {
+                    for (int x = 0; x <= brushSize; x++)
+                    {
+                        // * tady je možná chyba
+                        System.Numerics.Vector3 modifyPoint = collisionPoint + new System.Numerics.Vector3(x, y, z) - new System.Numerics.Vector3(brushSize - 1.0f) * 0.5f;
+
+                        // get octant
+                        int octantIndex = octree.FindOctantWithPosition(octree.rootIndex, modifyPoint);
+                        if (octantIndex == int.MaxValue) continue; // pokud invalidní octant
+                        ref Octant<int> octant = ref octree.GetOctant(octantIndex);
+
+                        // get chunk
+                        int chunkIndex = octant.value;
+                        if (chunkIndex == int.MaxValue) continue; // pokud invalidní chunk
+                        ref Terrain.Chunk chunk = ref chunkPool.Get(chunkIndex);
+
+                        if (!modifiedOctants.Contains(octantIndex)) modifiedOctants.Add(octantIndex);
+
+                        // pozice ve fieldu
+                        System.Numerics.Vector3 localChunkModifyPoint = modifyPoint - octant.position;
+                        int fieldIndex = (int)localChunkModifyPoint.X + (int)localChunkModifyPoint.Y * Terrain.Chunk.realFieldSize + (int)localChunkModifyPoint.Z * Terrain.Chunk.realFieldSize * Terrain.Chunk.realFieldSize;
+
+                        // modify field
+                        if (extrude)
+                        {
+                            if (chunk.field[fieldIndex] < byte.MaxValue - brushAmount) chunk.field[fieldIndex] += brushAmount;
+                        }
+                        else
+                        {
+                            if (chunk.field[fieldIndex] >= brushAmount) chunk.field[fieldIndex] -= brushAmount;
+                        }
+                    }
+                }
+            }
+
+            // update všech modifikovaných chunků
+            foreach (int octantIndex in modifiedOctants)
+            {
+                //GD.Print("\t", octantIndex);
+
+                ref Octant<int> octant = ref octree.GetOctant(octantIndex);
+                ref Terrain.Chunk chunk = ref chunkPool.Get(octant.value);
+                // update & save
+                chunk.Create(octant.position, octant.size);
+                worldSave.SaveChunk(ref chunk, octant.position, octant.size); // (23.09.2025)
+            }
+
+        }
+
+        //
+        // set chunk edge values
+        //
+
+        public void GetChunkEdgeValues(int octantIndex)
+        {
+            Octant<int> octant = octree.GetOctant(octantIndex);
+            int chunkIndex = octant.value;
+            if (chunkIndex == int.MaxValue) return;
+            ref Terrain.Chunk chunk = ref chunkPool.Get(chunkIndex);
+
+            for (int i = 1; i < 8; i++)
+            {
+                //
+                System.Numerics.Vector3 neighborDirection = new(i % 2, i / 2 % 2, i / 4);
+
+                // get neighbor octant
+                int neighborOctantIndex = octree.FindOctantNeighbor(octantIndex, neighborDirection);
+                if (neighborOctantIndex == int.MaxValue) continue;
+                Octant<int> neighborOctant = octree.GetOctant(neighborOctantIndex);
+
+                // plane
+                System.Numerics.Vector3 invDirection = new System.Numerics.Vector3(1, 1, 1) - neighborDirection;
+                System.Numerics.Vector3 planeSize = invDirection * Terrain.Chunk.fieldSize + neighborDirection;
+
+                // diffrence
+                float scaleDiffrence = octant.size / neighborOctant.size;
+                System.Numerics.Vector3 positionDiffrence = (octant.position - neighborOctant.position) * invDirection;
+
+                //
+                for (int z = 0; z < planeSize.Z; z++)
+                {
+                    for (int y = 0; y < planeSize.Y; y++)
+                    {
+                        for (int x = 0; x < planeSize.X; x++)
+                        {
+                            // pos
+                            System.Numerics.Vector3 pos = new(x, y, z);
+
+                            // field position
+                            System.Numerics.Vector3 fieldPosition = pos + neighborDirection * Terrain.Chunk.fieldSize;
+                            int fieldIndex = (int)fieldPosition.X + (int)fieldPosition.Y * Terrain.Chunk.realFieldSize + (int)fieldPosition.Z * Terrain.Chunk.realFieldSize * Terrain.Chunk.realFieldSize;
+
+                            // získání neighbor chunk
+                            // * vytvořeno takhle protože je možné že sousedící octantu bude složen z menších chunků
+                            // -> tady zjistíme zda je složen z dalších chunků, pokud ano tak hledáme hodnotu přez několik octantů.
+                            int neighborChunkIndex;
+                            if (!neighborOctant.isLeaf)
+                            {
+                                // global pos
+                                System.Numerics.Vector3 globalPosition = fieldPosition * octant.size / Terrain.Chunk.fieldSize + octant.position;
+                                int subNeighborOctantIndex = octree.FindOctantWithPosition(neighborOctantIndex, globalPosition);
+                                if (subNeighborOctantIndex == int.MaxValue) continue;
+                                Octant<int> subNeighborOctant = octree.GetOctant(subNeighborOctantIndex);
+                                neighborChunkIndex = subNeighborOctant.value;
+                            }
+                            else
+                            {
+                                neighborChunkIndex = neighborOctant.value;
+                            }
+                            if (neighborChunkIndex == int.MaxValue) continue;
+                            ref Terrain.Chunk neighborChunk = ref chunkPool.Get(neighborChunkIndex);
+
+                            // neighbor field position
+                            System.Numerics.Vector3 neighborFieldPosition = (pos + positionDiffrence) * scaleDiffrence;
+                            int neighborFieldIndex = (int)neighborFieldPosition.X + (int)neighborFieldPosition.Y * Terrain.Chunk.realFieldSize + (int)neighborFieldPosition.Z * Terrain.Chunk.realFieldSize * Terrain.Chunk.realFieldSize;
+                            byte neighborFieldValue = neighborChunk.field[neighborFieldIndex];
+
+                            // set
+                            chunk.field[fieldIndex] = neighborFieldValue;
+
+                        }
+                    }
+                }
 
 
 
-
-
+            }
+        }
 
 
 
@@ -314,4 +554,6 @@ namespace WorldSystem.Terrain
 * [19.07.2025] implementace funkce hledání sousedů v octree.
 * [20.07.2025] snaha přidat funkční chunk blending.
 * [09.09.2025] teď je vše nádherné. (všechno rozděleno do svých tříd, bez použití static)
+* [17.09.2025] funkční save chunků/ světa, skoro funkční modifikace terénu.
+*
 */

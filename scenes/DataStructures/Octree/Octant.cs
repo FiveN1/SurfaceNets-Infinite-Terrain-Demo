@@ -7,7 +7,7 @@ namespace DataStructures
         // data octantu.
         public int parent;
         public bool isLeaf;
-        public int[] leafs; // tohle ne array ?!
+        public int[] leafs; // tohle ne array ?! NEMUSÍ BÝT ARRAY, STAČÍ DRŽET IDEX K PRVNÍMU ! potom se můžu zbavit i isLeaf
 
         // držet int o tom v jakém levelu jsme?
         // nebo to zjistíme pomocí size?

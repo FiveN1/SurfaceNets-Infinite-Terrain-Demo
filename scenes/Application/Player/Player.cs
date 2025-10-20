@@ -26,6 +26,9 @@ public partial class Player : CharacterBody3D
 
     bool NoclipEnabled = true;
 
+    [Export] NodePath worldPath;
+    WorldSystem.World world;
+
 
 
 
@@ -47,6 +50,8 @@ public partial class Player : CharacterBody3D
         Camera = GetNode<Camera3D>(Camera3DPath);
         RayCast = GetNode<RayCast3D>(RayCastPath);
 
+        world = GetNode<WorldSystem.World>(worldPath);
+
         //terrain = GetNode< WorldSystem.Terrain.WorldTerrain>(terrainPath);
         //GameTerrain = GetNode<MCTerrain>(TerrainPath);
 
@@ -56,6 +61,8 @@ public partial class Player : CharacterBody3D
     {
         // tohle je třeba volat každý snímek pro plynulý pohyb.
         MoveAndSlide();
+
+        world.UpdatePov(Position);
 
     }
     public override void _PhysicsProcess(double delta)
@@ -123,6 +130,7 @@ public partial class Player : CharacterBody3D
         ProcessCameraState();
         Processteleport();
         ProcessVsync();
+        ProcessLODUpdate();
     }
 
     private void ProcessMovement(float delta)
@@ -178,7 +186,7 @@ public partial class Player : CharacterBody3D
     {
         if (Input.IsActionJustPressed("E"))
         {
-            Position = new(2.0f, 2.0f, 2.0f);
+            Position = new(0.0f, 0.0f, 0.0f);
         }
     }
 
@@ -199,10 +207,23 @@ public partial class Player : CharacterBody3D
 
     private void ProcessTerraforming()
     {
-        if (Input.IsActionPressed("mouse_left") && RayCast.IsColliding())
+        if (Input.IsActionPressed("mouse_left") && RayCast.IsColliding()) // kopání
         {
-            GD.Print("intersecting: ", RayCast.GetCollider(), " at: ", RayCast.GetCollisionPoint());
-            //terrain.ModifyTerrain(RayCast.GetCollisionPoint());
+            Godot.Vector3 collisionPoint = RayCast.GetCollisionPoint();
+            world.ModifyTerrain(collisionPoint, false);
+        }
+        if (Input.IsActionPressed("mouse_right") && RayCast.IsColliding()) // tvoření
+        {
+            Godot.Vector3 collisionPoint = RayCast.GetCollisionPoint();
+            world.ModifyTerrain(collisionPoint, true);
+        }
+    }
+
+    private void ProcessLODUpdate()
+    {
+        if (Input.IsActionJustPressed("P"))
+        {
+            world.LODUpdateDisabled = !world.LODUpdateDisabled;
         }
     }
 

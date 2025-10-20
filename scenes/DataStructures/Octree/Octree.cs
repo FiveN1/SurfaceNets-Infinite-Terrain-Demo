@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 
 namespace DataStructures
@@ -31,7 +32,15 @@ namespace DataStructures
             // init pole
             octants = new FragArray<Octant<T>>();
             // root octant
-            rootIndex = octants.Add(new Octant<T>(0, position, size));
+            rootIndex = octants.Add(new Octant<T>(0, position, size)); // je vždy 0
+        }
+
+        public Octree(Vector3 position, float size, T defaultValue)
+        {
+            // init pole
+            octants = new FragArray<Octant<T>>();
+            // root octant
+            rootIndex = octants.Add(new Octant<T>(0, position, size)); // je vždy 0
         }
 
         ~Octree()
@@ -48,9 +57,9 @@ namespace DataStructures
             return ref octants.Get(OctantIndex);
         }
 
-        public Octant<T> GetRoot()
+        public ref Octant<T> GetRoot()
         {
-            return octants.Get(rootIndex); // root je vždy 0, protože je první v poli
+            return ref octants.Get(rootIndex); // root je vždy 0, protože je první v poli
         }
 
         public FragArray<Octant<T>> GetOctantArray()
@@ -87,6 +96,38 @@ namespace DataStructures
             octants.Get(OctantIndex).isLeaf = false;
         }
 
+        // rozdělí leaf do 8 octantů
+        // POZNÁMKA: toto je jediná funkce kde se tvoří nové octanty. 
+        public void SubdivideOctant(int octantIndex, T copyValue)
+        {
+            // POZNÁMKA: jelikož se tady přidávají data, je možné že se změní adresy elementů v array (kvůli reallokaci)
+
+            // check zda už byl subdividován
+            if (!octants.Get(octantIndex).isLeaf) return;
+            // předem zapíšeme data o octantu
+            Vector3 octantPosition = octants.Get(octantIndex).position;
+            float octantSize = octants.Get(octantIndex).size;
+            // vytvoříme 8 listů
+            for (int z = 0; z < 2; z++)
+            {
+                for (int y = 0; y < 2; y++)
+                {
+                    for (int x = 0; x < 2; x++)
+                    {
+                        int leafOctantIndex = octants.Add(new Octant<T>(octantIndex, new Vector3(x, y, z) * octantSize * 0.5f + octantPosition, octantSize * 0.5f));
+                        octants.Get(octantIndex).leafs[x + y * 2 + z * 4] = leafOctantIndex;
+                        // set copy value
+                        octants.Get(leafOctantIndex).value = copyValue;
+
+                    }
+                }
+            }
+            // teď už není listem
+            octants.Get(octantIndex).isLeaf = false;
+        }
+
+        // z rozděleného octantu (kořene) vytvoří jeden (leaf)
+        // POZNÁMKA: toto je jediná funkce kde se odstranují octanty. 
         public void UnSubdivideOctant(int OctantIndex)
         {
             ref Octant<T> octant = ref octants.Get(OctantIndex);
@@ -133,7 +174,7 @@ namespace DataStructures
         }
 
         // získáme octant s pozicí o nejmenší velikosti.
-        public int FindOctantWithPositionOfSize(int beginOctantIndex, Vector3 position, float minSize)
+        public int FindOctantWithPosition(int beginOctantIndex, Vector3 position, float minSize)
         {
             ref Octant<T> octant = ref octants.Get(beginOctantIndex);
             // pokud neobsahuje pozici tak se vrací null
@@ -147,14 +188,20 @@ namespace DataStructures
                 int leafOctantIndex = octant.leafs[leafIndex];
                 ref Octant<T> leafOctant = ref octants.Get(octant.leafs[leafIndex]);
                 // pokud obsahuje pozici tak iterujem na listu
-                if (leafOctant.ContainsPosition(position)) return FindOctantWithPositionOfSize(leafOctantIndex, position, minSize);
+                if (leafOctant.ContainsPosition(position)) return FindOctantWithPosition(leafOctantIndex, position, minSize);
             }
             // sem by se nikdo nikdy neměl dostat...
             return int.MaxValue;
         }
 
         // sečíst indexy?
-        public int FindOctantNeighborUnchecked(int octantIndex, Vector3 direction)
+
+        //
+        // 0 0 
+        // 0 0
+        //
+        //
+        public int FindOctantNeighborSibling(int octantIndex, Vector3 direction) // něco špatně...
         {
             // získáme octant
             ref Octant<T> octant = ref octants.Get(octantIndex);
@@ -164,17 +211,23 @@ namespace DataStructures
             if (octant.parent == octantIndex) return int.MaxValue;
             ref Octant<T> octantParent = ref octants.Get(octant.parent);
 
-            Vector3 thisPosInParent = (octant.position - octantParent.position) / octant.size;
-            Vector3 neighborPosInParent = thisPosInParent + direction;
+            Vector3 positionInParent = (octant.position - octantParent.position) / octant.size;
+            Vector3 neighborPosInParent = positionInParent + direction;
+            //Godot.GD.Print("positionInParent: ", positionInParent, ", neighborPosInParent: ", neighborPosInParent);
 
             if (neighborPosInParent.X > 1 || neighborPosInParent.X < 0 || neighborPosInParent.Y > 1 || neighborPosInParent.Y < 0 || neighborPosInParent.Z > 1 || neighborPosInParent.Z < 0)
             {
                 // transformujem pozici aby místo (0, 1) byla (-1, 1)
-                Vector3 transThisPosInParent = thisPosInParent * 2 - new Vector3(1, 1, 1);
+                Vector3 positionInParentScaled = positionInParent * 2 - new Vector3(1);
                 // tímto jednoduchým trikem spravíme směr. protože pokud by směr nebyl na hraně tak by byl špatný.
-                direction = (direction + transThisPosInParent) / 2;
+                // POZNÁMKA: jelikož se tu nachází i negativní hodnoty tak se podle toho musí určit round.
+                direction = (direction + positionInParentScaled) / 2;
+                direction = new(
+                    direction.X > 0.0f ? Single.Floor(direction.X) : Single.Ceiling(direction.X),
+                    direction.Y > 0.0f ? Single.Floor(direction.Y) : Single.Ceiling(direction.Y),
+                    direction.Z > 0.0f ? Single.Floor(direction.Z) : Single.Ceiling(direction.Z));
                 // iterujem na rodiči
-                return FindOctantNeighborUnchecked(octant.parent, direction);
+                return FindOctantNeighborSibling(octant.parent, direction);
             }
             int indexInParent = (int)neighborPosInParent.X + (int)neighborPosInParent.Y * 2 + (int)neighborPosInParent.Z * 4;
             // pokud je vše vpohodě, vrátíme souseda, který je také sourozenec.
@@ -182,18 +235,21 @@ namespace DataStructures
 
         }
 
+        // 1, -1, 1
+        // 2, -1, 1
+
         public int FindOctantNeighbor(int octantIndex, Vector3 direction)
         {
 
             ref Octant<T> octant = ref octants.Get(octantIndex);
 
-            int neighborIndex = FindOctantNeighborUnchecked(octantIndex, direction);
+            int neighborIndex = FindOctantNeighborSibling(octantIndex, direction);
             if (neighborIndex == int.MaxValue) return int.MaxValue;
             // iterovat do nejmenší velikosti která zabírá celou stranu direction
             // dokud bod nebudude obsahovat body které se nedotýkají bodu.
             Vector3 samplePosition = octant.position + direction * octant.size;
             // získáme octant který je stejné nebo větší velikosti než aktivní octant
-            neighborIndex = FindOctantWithPositionOfSize(neighborIndex, samplePosition, octant.size);
+            neighborIndex = FindOctantWithPosition(neighborIndex, samplePosition, octant.size);
             return neighborIndex;
         }
 
@@ -202,7 +258,7 @@ namespace DataStructures
         public int SubdivideAtPoint(int beginOctantIndex, System.Numerics.Vector3 position, float minSize)
         {
             // najdem octant obsahující pozici
-            int octIndex = FindOctantWithPosition(beginOctantIndex, position);
+            int octIndex = FindOctantWithPosition(beginOctantIndex, position, minSize);
             if (octIndex == int.MaxValue) return int.MaxValue; // pokud je invalidní pozice
             Octant<T> octant = GetOctant(octIndex);
             // pokud je octant větší než požadovaná velikost tak pokračujem
@@ -210,6 +266,23 @@ namespace DataStructures
             {
                 SubdivideOctant(octIndex);
                 SubdivideAtPoint(octIndex, position, minSize);
+            }
+            // jinak vracíme aktualní 
+            return octIndex;
+        }
+
+        // Postupně rozdělujem octree tak abychom se dostali na pozici o určité velikosti.
+        public int SubdivideAtPoint(int beginOctantIndex, System.Numerics.Vector3 position, float minSize, T copyValue)
+        {
+            // najdem octant obsahující pozici
+            int octIndex = FindOctantWithPosition(beginOctantIndex, position, minSize);
+            if (octIndex == int.MaxValue) return int.MaxValue; // pokud je invalidní pozice
+            Octant<T> octant = GetOctant(octIndex);
+            // pokud je octant větší než požadovaná velikost tak pokračujem
+            if (octant.size > minSize)
+            {
+                SubdivideOctant(octIndex, copyValue);
+                return SubdivideAtPoint(octIndex, position, minSize, copyValue);
             }
             // jinak vracíme aktualní 
             return octIndex;
@@ -228,3 +301,6 @@ namespace DataStructures
 * všiml jsem si ale jedné optimalizace u FindNeighbor, kde lze místo vektorů použít leafIndexy pro získání souseda.
 *
 */
+
+
+// music scale je unikátní charakter hlasu.

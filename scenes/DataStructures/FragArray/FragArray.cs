@@ -50,7 +50,7 @@ namespace DataStructures
 
         public ref T Get(int index)
         {
-            if (index >= this.bufferSize || index < 0) throw new System.ArgumentException("Index out of range.", nameof(index));
+            if (index >= this.bufferSize || index < 0) throw new System.ArgumentException("Index '" + index +"' out of range.", nameof(index));
             if (!this.booleanBlock[index]) throw new System.ArgumentException("Element at index empty.", nameof(index));
             return ref this.dataBlock[index];
         }

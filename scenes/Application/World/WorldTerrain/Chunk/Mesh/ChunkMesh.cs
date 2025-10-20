@@ -4,7 +4,7 @@ namespace WorldSystem.Terrain
 {
     public struct ChunkMesh
     {
-        public readonly MeshInstance3D surfaceNetMesh;
+        public MeshInstance3D surfaceNetMesh;
         public SurfaceNet.MeshData meshData;
 
         // constructor
@@ -37,7 +37,8 @@ namespace WorldSystem.Terrain
             arrays[(int)Mesh.ArrayType.Vertex] = this.meshData.vertexPositions;
             arrays[(int)Mesh.ArrayType.Normal] = this.meshData.vertexNormals;
             arrays[(int)Mesh.ArrayType.Index] = this.meshData.indices;
-            
+
+
             arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays); // POMALE! (z nějakého důvodu velmi pomalé)
             surfaceNetMesh.Mesh = arrayMesh;
 
@@ -45,5 +46,11 @@ namespace WorldSystem.Terrain
             surfaceNetMesh.Position = nodePosition;
             surfaceNetMesh.Scale = new Vector3(nodeSize, nodeSize, nodeSize) * (1.0f / (float)fieldSize); // ((float)realFieldSize - 2.0f)
         }
+
+        public void Enabled(bool enabled)
+        {
+            surfaceNetMesh.Visible = enabled;
+        }
+        
     }
 }

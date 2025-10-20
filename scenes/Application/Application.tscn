@@ -1,9 +1,11 @@
-[gd_scene load_steps=18 format=3 uid="uid://c5pd7m4pxc4r2"]
+[gd_scene load_steps=20 format=3 uid="uid://c5pd7m4pxc4r2"]
 
 [ext_resource type="Script" uid="uid://drx5a6n1hh58v" path="res://scenes/Application/Application.cs" id="1_lmbyv"]
 [ext_resource type="PackedScene" uid="uid://d30nm8h5ixhys" path="res://scenes/Application/Player/Player.tscn" id="2_puocm"]
 [ext_resource type="Shader" uid="uid://diuuygs121kca" path="res://scenes/Application/World/WorldTerrain/Chunk/Shader/NodeDebugShader.gdshader" id="3_puocm"]
+[ext_resource type="Shader" uid="uid://ddmo20xq6oyo7" path="res://scenes/Application/Enviroment/SkyShader.gdshader" id="5_00nah"]
 [ext_resource type="PackedScene" uid="uid://bignlsd8ojhlq" path="res://scenes/Application/World/World.tscn" id="6_00nah"]
+[ext_resource type="FontFile" uid="uid://cdaprce6flhq8" path="res://assets/font/ProggyClean/ProggyClean.ttf" id="6_jfhc7"]
 [ext_resource type="Script" uid="uid://c28nqd2etyppg" path="res://scenes/Application/UI/Ui.cs" id="6_lmbyv"]
 [ext_resource type="Texture2D" uid="uid://cnkb3rn7lwm5p" path="res://assets/cursor2.png" id="7_g24vp"]
 [ext_resource type="PackedScene" uid="uid://r5187ga282u8" path="res://scenes/Application/Terrain/WorldGenerator/WorldGenerator.tscn" id="8_bibs7"]
@@ -16,13 +18,11 @@ render_priority = 0
 shader = ExtResource("3_puocm")
 shader_parameter/color = Color(0.192451, 0.850185, 0.497093, 1)
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_00nah"]
-ground_bottom_color = Color(0.587201, 0.13702, 0.153875, 1)
-ground_horizon_color = Color(0.714934, 0.637033, 0.593905, 1)
-ground_curve = 0.331287
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_puocm"]
+shader = ExtResource("5_00nah")
 
 [sub_resource type="Sky" id="Sky_j3gmf"]
-sky_material = SubResource("ProceduralSkyMaterial_00nah")
+sky_material = SubResource("ShaderMaterial_puocm")
 
 [sub_resource type="Environment" id="Environment_1frhs"]
 background_mode = 2
@@ -57,6 +57,7 @@ script = ExtResource("1_lmbyv")
 [node name="Player" parent="3D" instance=ExtResource("2_puocm")]
 transform = Transform3D(-0.62932, 0, -0.777146, 0, 1, 0, 0.777146, 0, -0.62932, 0, 0, 0)
 speed = 2000.0
+worldPath = NodePath("../../World")
 
 [node name="mesh1" type="MeshInstance3D" parent="3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.58079, 0.355369, -0.335957)
@@ -93,6 +94,13 @@ shape = SubResource("ConcavePolygonShape3D_1i0c2")
 Noise3 = SubResource("FastNoiseLite_00nah")
 Noise3Intensity = 16.0
 TerrainBaseHeight = 1.0
+
+[node name="Label3D" type="Label3D" parent="3D"]
+billboard = 1
+texture_filter = 0
+text = "Hello World!"
+font = ExtResource("6_jfhc7")
+font_size = 64
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 3

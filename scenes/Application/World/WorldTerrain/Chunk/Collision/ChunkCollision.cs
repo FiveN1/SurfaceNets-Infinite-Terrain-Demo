@@ -33,5 +33,10 @@ namespace WorldSystem.Terrain
 
             concavePolygonShape.SetFaces(verticesForCollision);
         }
+
+        public void Enabled(bool enabled)
+        {
+            collisionShape.Disabled = !enabled;
+        }
     }
 }

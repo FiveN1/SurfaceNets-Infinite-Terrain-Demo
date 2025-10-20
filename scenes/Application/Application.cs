@@ -35,6 +35,8 @@ using System;
 *
 * čím níž tím větší mlha
 *
+* Hořlavé západy slunce znamenají velké nebezpečí.
+*
 */
 
 /*
@@ -82,7 +84,29 @@ using System;
 *   + Určený počet meshů pro renderování?
 *
 * Stíny.
+* ŘEŠENÍ:
+* - per vertex stíny
 *
+* Chunk Save
+*
+*
+*
+*
+*
+*
+*
+*/
+
+/* O čem bude?
+*
+* - inspirována noahovou archou.
+* - člověk přežívá vlny.
+*   (* vlny které tě zkouší, mohou tě zničit, velká potopa.)
+*   (* vlny budou představovat nepřátelé kteří ti boří svět.)
+* - budováním si tvoří toleranci. (mít něco v životě co tě podrží)
+*   (* na tuhle část udělat kontrast -> ostatní postavy neumí tvořit a propadají vlnám)
+*
+* - ... vyšší level ...
 *
 */
 

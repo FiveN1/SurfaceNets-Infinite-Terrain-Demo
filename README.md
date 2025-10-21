@@ -30,6 +30,13 @@ A pretty complex system wich stores every modified chunk of the world in one fil
 
 [Check it out here!](scenes/Application/World/WorldSave)
 
+## Bucketlist
+- Saving chunks in batches
+- Computing SurfaceNets mesh on the GPU
+- Textures
+- Chunk Stiching
+- Removing unnessery buffer allocations in WorldData
+
 ### Chunk Stich system❌
 *Not yet implemented*
 

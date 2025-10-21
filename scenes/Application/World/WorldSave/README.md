@@ -18,6 +18,9 @@ You can imagine this like big 3D octree structure in wich the smallest cells tha
 The `world_data.dat` file contains the actual chunk data stored in one big array.
 Note that a special kind of anrray is used here wich can have holes between elements, wich keeps the elements at the same position in array, even if some elements are removed or added. This kind of array is called an Fragmented array, or [FragArray](../../../DataStructures/FragArray) for short.
 
+> [!NOTE]
+> Each file has its own class
+
 ## How do the save/load functions work?
 ...
 

@@ -20,6 +20,7 @@ Note that a special kind of anrray is used here wich can have holes between elem
 
 > [!NOTE]
 > Each file has its own class
+> WorldData is under heavy developement
 
 ## How do the save/load functions work?
 ...

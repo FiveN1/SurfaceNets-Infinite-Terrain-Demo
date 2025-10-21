@@ -40,6 +40,9 @@ namespace WorldSystem.Save
         private const int chunkBufferOrigin = sizeof(int);
         private int chunkBufferSize = Terrain.Chunk.fieldSize * Terrain.Chunk.fieldSize * Terrain.Chunk.fieldSize;
 
+        // dočasné !!
+        byte[] chunkData;
+
         //
         //
         //
@@ -51,6 +54,10 @@ namespace WorldSystem.Save
 
 
             LoadSavedChunksAmount();
+
+
+            // temp
+            chunkData = new byte[chunkBufferSize];
 
         }
 
@@ -66,13 +73,11 @@ namespace WorldSystem.Save
             }
             // setup array
             // * zbavit se !! zbytečné allokace a kopírování (24.09.2025)
-            byte[] chunkData = new byte[Terrain.Chunk.fieldSize * Terrain.Chunk.fieldSize * Terrain.Chunk.fieldSize];
+            //byte[] chunkData = new byte[Terrain.Chunk.fieldSize * Terrain.Chunk.fieldSize * Terrain.Chunk.fieldSize];
             // získáme fieldData z chunku který chceme uložit.
             GetChunkFieldData(ref chunk, chunkData);
             // otevře soubor a zapíše do něj
             WriteChunk(chunkIndex, chunkData);
-
-            //GD.Print("saved ", chunkName);
         }
 
 
@@ -81,8 +86,7 @@ namespace WorldSystem.Save
         {
             // * zbavit se !! zbytečné allokace a kopírování (24.09.2025)
             // * kopírovat přímo do chunku.
-            byte[] chunkData = new byte[chunkBufferSize];
-
+            //byte[] chunkData = new byte[chunkBufferSize];
 
             ReadChunk(chunkIndex, chunkData);
             // vracíme, ikdyž může být prázdný. * check se provádí potom
@@ -140,7 +144,6 @@ namespace WorldSystem.Save
                 fileStream.Seek(chunkBufferOrigin + chunkIndex * chunkBufferSize, SeekOrigin.Begin);
                 fileStream.Write(fieldData, 0, fieldData.Length);
             }
-            GD.Print("written chunk at: ", chunkIndex);
         }
 
         private void ReadChunk(int chunkIndex, byte[] fieldData)
@@ -196,26 +199,6 @@ namespace WorldSystem.Save
                 savedChunksAmount = BitConverter.ToInt32(chunkBufferSizeByteArray, 0);
             }
         }
-
-        /*
-        private void CreateFileIfNone()
-        {
-            if (File.Exists(worldDataFileName)) return;
-
-            using (FileStream fileStream = new FileStream(worldDataFileName, System.IO.FileMode.Create, System.IO.FileAccess.Write))
-            {
-                // convert
-                byte[] savedChunksAmountByteArray = BitConverter.GetBytes(savedChunksAmount);
-                // write
-                fileStream.Seek(savedChunksAmountOrigin, SeekOrigin.Begin);
-                fileStream.Write(savedChunksAmountByteArray, 0, savedChunksAmountByteArray.Length);
-            }
-
-            GD.Print("CREATED NEW");
-        }
-        */
-
-
 
 
     }

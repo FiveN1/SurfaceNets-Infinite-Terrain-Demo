@@ -12,7 +12,7 @@ namespace WorldSystem.Save
     public partial class WorldSave : Node
     {
 
-        const string appName = "p1ga";
+        const string appName = "SurfaceNets-Infinite-Terrain-Demo";
         string worldDirectory;
 
         Header header;
@@ -38,16 +38,6 @@ namespace WorldSystem.Save
             // world generation
             worldGen = new WorldGenration(seed);
 
-        }
-
-        private void CreateWorldDirectoryIfNone(string worldDirectory)
-        {
-            if (!Directory.Exists(worldDirectory))
-            {
-                GD.PrintErr("World directory empty: ", worldDirectory);
-                Directory.CreateDirectory(worldDirectory);
-            }
-            GD.Print("World Exists");
         }
 
         //
@@ -146,6 +136,8 @@ namespace WorldSystem.Save
             // * POZNÁMKA: pokud se nepodaří načíst data chunku z této funkce, tak se vrátí prázdný array ale pořád o velikosti.
             byte[] chunkData = worldData.LoadChunkData(octant.value);
 
+
+
             // pokud se vše povede (povede se načíst data chunku) tak zaplníme část kterou zabírá v požadovaném chunku.
             FillChunkPieceLoad(ref chunk, positionInChunk, sizeInChunk, chunkData);
         }
@@ -186,6 +178,16 @@ namespace WorldSystem.Save
                     }
                 }
             }
+        }
+
+        private void CreateWorldDirectoryIfNone(string worldDirectory)
+        {
+            if (!Directory.Exists(worldDirectory))
+            {
+                GD.PrintErr("World directory empty: ", worldDirectory);
+                Directory.CreateDirectory(worldDirectory);
+            }
+            GD.Print("World Exists");
         }
 
 

@@ -20,7 +20,7 @@ namespace WorldSystem.Terrain
             // získáme krajní field hodnoty z vedlejších chunků
             //node.GetEdgeFieldValues(); // POMALÉ! (lze snadno optimalizovat)
             // vygenerovat core mesh
-            SurfaceNet.Algorithm.GenerateMeshData2(ref field, new(realFieldSize, realFieldSize, realFieldSize), 128, ref meshData, new(realFieldSize - 1, realFieldSize - 1, realFieldSize - 1)); // POMALÉ! (lze optimalizovat pomocí GPU)
+            SurfaceNet.Algorithm.GenerateMeshData(ref field, realFieldSize, 128, ref meshData, new(realFieldSize - 1, realFieldSize - 1, realFieldSize - 1)); // POMALÉ! (lze optimalizovat pomocí GPU)
             // spojit mesh s vedlejším meshem
             //node.StichChunks(ref this.meshData);
             //node.Stich2();

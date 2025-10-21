@@ -8,38 +8,36 @@ namespace WorldSystem
     // je rozdělen do chunků podle LOD. kde největší LOD je v místě kde se nachází hráč/kamera.
     public partial class World : Node
     {
+        // hlavní systémy světa.
+        // Terrain rendering & World Save
+        private Terrain.WorldTerrain worldTerrain;
+        private Save.WorldSave worldSave;
 
-        Terrain.WorldTerrain worldTerrain; // private?
-        Save.WorldSave worldSave;
-
+        // mesh node
+        // tento bod bude ve scéně držet všechny meshe a kolizivní tvary chunků.
         [Export] public NodePath meshNodePath;
         Node3D meshNode;
 
         public bool LODUpdateDisabled = false;
 
-        public World()
-        {
-            GD.Print("World constructor");
-        }
+
 
         public override void _Ready()
         {
+            // call base ready
             base._Ready();
 
-            // ZMĚNIT DEBUG !!
-            // - aby se mřížka ukazovala pouze u jednoho chunku.
-            // - aby pro každý chunk nemusel být debug.
-
-            meshNode = GetNode<Node3D>(meshNodePath);
-
-            worldTerrain = new Terrain.WorldTerrain(meshNode);
-            // world save
+            // použito jenom tady pro načtení světa
             string worldName = "world1";
             int worldSeed = 8;
-            worldSave = new Save.WorldSave(worldTerrain.worldPosition, worldTerrain.worldSize, worldName, worldSeed);
 
-            // pro začátek nastavíme LOD na prostředku světa.
-            UpdatePov(new(0.0f, 0.0f, 0.0f));
+            // získáme referenci na bod který je v scéně
+            meshNode = GetNode<Node3D>(meshNodePath);
+            // construct systems
+            // vytvoříme terrain system
+            worldTerrain = new Terrain.WorldTerrain(meshNode);
+            // vytvoříme world save system
+            worldSave = new Save.WorldSave(worldTerrain.worldPosition, worldTerrain.worldSize, worldName, worldSeed);
         }
 
         // vygeneruje world octree strukturu podle toho kde se pov pozice nachází.
@@ -61,6 +59,11 @@ namespace WorldSystem
     }
 
 }
+
+// ZMĚNIT DEBUG !!
+// - aby se mřížka ukazovala pouze u jednoho chunku.
+// - aby pro každý chunk nemusel být debug.
+
 
 /* Změny
 *

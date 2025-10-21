@@ -109,7 +109,7 @@ namespace WorldSystem.Terrain
         // 5 2 2    
         // 2 1 0    
         //
-        public static int GetFieldIndex(int x, int y)
+        public static int GetFieldIndex_old(int x, int y)
         {
             // * zbavit se if !! (25.09.2025)
             // funguje správně
@@ -123,6 +123,12 @@ namespace WorldSystem.Terrain
                 index = y * (y + 1) + x;
             }
             return index;
+        }
+
+        public static int GetFieldIndex(int x, int y, int z)
+        {
+            
+            return x + y * realFieldSize + z * realFieldSize * realFieldSize;
         }
 
         public static int GetFieldIndex2(int x, int y)

@@ -187,7 +187,6 @@ namespace WorldSystem.Save
                 GD.PrintErr("World directory empty: ", worldDirectory);
                 Directory.CreateDirectory(worldDirectory);
             }
-            GD.Print("World Exists");
         }
 
 
@@ -198,4 +197,5 @@ namespace WorldSystem.Save
 *
 * [06.09.2025] vytvořeno
 * [23.09.2025] teď konečně funkční save a load při nižším lod. ale je to pomalé...
+* [22.10.2025] trochu začištěno.
 */

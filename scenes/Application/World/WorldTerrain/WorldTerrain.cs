@@ -21,8 +21,10 @@ namespace WorldSystem.Terrain
     public class WorldTerrain
     {
         //
-        public const int worldScale = 3;
-        public const float renderDistanceScale = 1.2f; // LOD scale, podle toho se určuje vzdálenost kvalitních chunků. (1.0f, je default) (může jít od 0.1f, do +inf, víc než 2.0f není potřeba)
+        public int worldScale;
+        public float renderDistanceScale = 1.2f; // LOD scale, podle toho se určuje vzdálenost kvalitních chunků. (1.0f, je default) (může jít od 0.1f, do +inf, víc než 2.0f není potřeba)
+        
+        // world dimenstions
         public readonly float worldSize;
         public readonly System.Numerics.Vector3 worldPosition;
 
@@ -34,21 +36,22 @@ namespace WorldSystem.Terrain
         public ChunkContext chunkContext;
 
         // constructor
-        public WorldTerrain(Node3D meshNode)
+        public WorldTerrain(Node3D meshNode, int worldScale)
         {
+            this.worldScale = worldScale;
             // výpočet rozměrů světa podle worldScale
-            worldSize = Mathf.Pow(2, worldScale) * Chunk.fieldSize;
-            worldPosition = new System.Numerics.Vector3(-worldSize / 2.0f);
+            this.worldSize = Mathf.Pow(2, worldScale) * Chunk.fieldSize;
+            this.worldPosition = new System.Numerics.Vector3(-worldSize / 2.0f);
 
             // init struktur
-            octree = new DataStructures.Octree<int>(worldPosition, worldSize);
-            octree.GetOctant(octree.rootIndex).value = int.MaxValue; // set root default
-            chunkPool = new DataStructures.Pool<Chunk>();
+            this.octree = new DataStructures.Octree<int>(worldPosition, worldSize);
+            this.octree.GetOctant(octree.rootIndex).value = int.MaxValue; // set root default
+            this.chunkPool = new DataStructures.Pool<Chunk>();
 
             // chunk context
             // ZBAVIT SE !!
-            chunkContext = new ChunkContext(meshNode);
-            chunkContext.DebugEnabled(true);
+            this.chunkContext = new ChunkContext(meshNode);
+            this.chunkContext.DebugEnabled(true);
         }
 
 
@@ -158,7 +161,6 @@ namespace WorldSystem.Terrain
             {
                 chunk = new(chunkContext);
                 chunkPool.SetAcConstructed(chunkIndex);
-                GD.Print("new chunk ", chunkIndex);
             }
             chunk.Enabled(true);
             return chunkIndex;
@@ -383,108 +385,6 @@ namespace WorldSystem.Terrain
 
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        /*
-        public override void _Ready()
-        {
-            base._Ready();
-            GD.Print("Happy World Daddy");
-
-            NodeMaterial = GD.Load<StandardMaterial3D>("res://scenes/Application/Terrain/StandardMaterial1.tres"); // res://scenes/Application/Terrain/StandardTransparentMaterial.tres
-
-            MeshNode = GetNode<Node3D>(MeshNodePath);
-            GD.Print("node: ", MeshNode, " path: ", MeshNodePath);
-
-            Player = GetNode<CharacterBody3D>(PlayerPath);
-
-            WorldGen = GetNode<WorldGenerator>(WorldGeneratorPath);
-
-            Octree.Tree.worldGen = GetNode<WorldGenerator>(WorldGeneratorPath);
-
-
-
-            ChunkPool chunkPool = new ChunkPool(MeshNode);
-
-            //GetViewport().DebugDraw = Viewport.DebugDrawEnum.Wireframe;
-
-
-            Octree.Node.SetMeshParentNode(MeshNode);
-            Octree.Node.EnableDebugVisuals(true);
-            Octree.Node.SetChunkQueue(chunkPool);
-
-            float worldSize = Mathf.Pow(2, WorldScale) * Terrain22.Chunk.size;
-            float worldPosition = -worldSize / 2;
-            rootNode = new Octree.Node(new(worldPosition, worldPosition, worldPosition), worldSize, null);
-            Octree.Tree.SubdivideIfClose(rootNode, new(0, 0, 0), 0, WorldScale);
-            GD.Print("world created of size: ", worldSize, " units");
-        }
-
-        public override void _PhysicsProcess(double delta)
-        {
-            base._PhysicsProcess(delta);
-
-            Vector3 PovPoint = Player.Position - Position;
-
-            Octree.Tree.SubdivideIfClose(rootNode, PovPoint, 0, WorldScale);
-        }
-
-        public void ModifyTerrain(Vector3 collisionPoint)
-        {
-            Vector3 localCollisionPoint = collisionPoint - this.Position;
-
-            int fieldSize = Terrain22.Chunk.fieldSize;
-
-            GD.Print("--- modifying");
-
-
-            for (int z = (int)localCollisionPoint.Z - 1; z <= (int)localCollisionPoint.Z + 1; z++)
-            {
-                for (int y = (int)localCollisionPoint.Y - 1; y <= (int)localCollisionPoint.Y + 1; y++)
-                {
-                    for (int x = (int)localCollisionPoint.X - 1; x <= (int)localCollisionPoint.X + 1; x++)
-                    {
-                        Vector3I modifyerCollisionPoint = new(x, y, z);
-                        GD.Print("point: ", modifyerCollisionPoint);
-
-                        Octree.Node collidingNode = rootNode.GetNodeWithPosition(modifyerCollisionPoint);
-                        Vector3 localChunkCollisionPoint = modifyerCollisionPoint - collidingNode.position;
-
-                        int fieldIndex = (int)localChunkCollisionPoint.X + (int)localChunkCollisionPoint.Y * fieldSize + (int)localChunkCollisionPoint.Z * fieldSize * fieldSize;
-
-                        Terrain22.Chunk chunk = Octree.Node.chunkPool.GetChunk(collidingNode.chunkIndex);
-
-                        if (chunk.field[fieldIndex] < 255 - 4)
-                        {
-                            chunk.field[fieldIndex] += 4;
-                        }
-                        //collidingNode.GenerateChunkMesh(chunk);
-                    }
-                }
-            }
-
-            Octree.Node collidingNode1 = rootNode.GetNodeWithPosition(localCollisionPoint);
-            Terrain22.Chunk chunk1 = Octree.Node.chunkPool.GetChunk(collidingNode1.chunkIndex);
-            collidingNode1.GenerateChunkMesh(chunk1);
-
-        }
-        */
-
-
     }
 }
 
@@ -555,5 +455,6 @@ namespace WorldSystem.Terrain
 * [20.07.2025] snaha přidat funkční chunk blending.
 * [09.09.2025] teď je vše nádherné. (všechno rozděleno do svých tříd, bez použití static)
 * [17.09.2025] funkční save chunků/ světa, skoro funkční modifikace terénu.
+* [22.10.2025] začištění
 *
 */

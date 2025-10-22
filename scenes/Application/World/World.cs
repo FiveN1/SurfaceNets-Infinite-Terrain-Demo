@@ -30,12 +30,13 @@ namespace WorldSystem
             // použito jenom tady pro načtení světa
             string worldName = "world1";
             int worldSeed = 8;
+            int worldScale = 3;
 
             // získáme referenci na bod který je v scéně
             meshNode = GetNode<Node3D>(meshNodePath);
             // construct systems
             // vytvoříme terrain system
-            worldTerrain = new Terrain.WorldTerrain(meshNode);
+            worldTerrain = new Terrain.WorldTerrain(meshNode, worldScale);
             // vytvoříme world save system
             worldSave = new Save.WorldSave(worldTerrain.worldPosition, worldTerrain.worldSize, worldName, worldSeed);
         }

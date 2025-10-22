@@ -9,6 +9,7 @@ The world is made out of voxels that are converted into meshes.
 > [!WARNING]
 > This demo is still indev.
 > Will lack some features and the code may be a total mess in some places.
+> Core features are still developed. Optimization and cutting down comes later. 
 
 ## Features
 ### SurfaceNets meshing ✅
